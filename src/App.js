@@ -13,6 +13,8 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [currentTask, setCurrentTask] = useState('');
   const [startTime, setStartTime] = useState(null);
+  const [completedTasks, setCompletedTasks] = useState([]);
+  const [timerKey, setTimerKey] = useState(0);
 
   const getCurrentSessionTime = () => {
     switch (currentSession) {
@@ -49,6 +51,7 @@ function App() {
     setCurrentSession('work');
     setSessionsCompleted(0);
     setStartTime(null);
+    setTimerKey(prev => prev + 1); // Force timer reset
   };
 
   const handleToggleTimer = () => {
@@ -61,6 +64,28 @@ function App() {
   const handleSessionTypeChange = (sessionType) => {
     if (!isRunning) {
       setCurrentSession(sessionType);
+    }
+  };
+
+  const handleMarkDone = () => {
+    if (currentTask.trim() && startTime) {
+      const endTime = new Date();
+      const duration = Math.round((endTime - startTime) / 1000 / 60); // duration in minutes
+      
+      const completedTask = {
+        id: Date.now(),
+        task: currentTask,
+        sessionType: currentSession,
+        startTime: startTime,
+        endTime: endTime,
+        duration: duration
+      };
+      
+      setCompletedTasks(prev => [completedTask, ...prev]);
+      setCurrentTask('');
+      setIsRunning(false);
+      setStartTime(null);
+      setTimerKey(prev => prev + 1); // Force timer reset
     }
   };
 
@@ -111,6 +136,7 @@ function App() {
 
         <div className="timer-section">
           <Timer
+            key={timerKey}
             initialTime={getCurrentSessionTime()}
             isRunning={isRunning}
             onToggle={handleToggleTimer}
@@ -120,6 +146,16 @@ function App() {
             currentTask={currentTask}
             startTime={startTime}
           />
+          
+          {/* Done Button */}
+          {currentTask.trim() && startTime && (
+            <button 
+              className="done-btn"
+              onClick={handleMarkDone}
+            >
+              Done
+            </button>
+          )}
         </div>
 
         <div className="session-info">
@@ -137,6 +173,31 @@ function App() {
             ⚙️ Settings
           </button>
         </div>
+
+        {/* Task History Section */}
+        {completedTasks.length > 0 && (
+          <div className="task-history">
+            <h3>Completed Tasks</h3>
+            <div className="task-list">
+              {completedTasks.slice(0, 5).map((task) => (
+                <div key={task.id} className="task-item">
+                  <div className="task-info">
+                    <div className="task-name">{task.task}</div>
+                    <div className="task-type">
+                      {task.sessionType === 'work' ? 'Pomo' : 
+                       task.sessionType === 'break' ? 'Short Break' : 'Long Break'}
+                    </div>
+                  </div>
+                  <div className="task-times">
+                    <div className="start-time">{task.startTime.toLocaleTimeString()}</div>
+                    <div className="end-time">{task.endTime.toLocaleTimeString()}</div>
+                    <div className="duration">{task.duration} min</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {showSettings && (
           <Settings
