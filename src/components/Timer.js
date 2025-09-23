@@ -94,26 +94,26 @@ const Timer = ({ initialTime, isRunning, onToggle, onReset, onComplete, sessionT
   return (
     <div className={`timer ${sessionType}`}>
       <div className="timer-circle">
-        <svg className="progress-ring" width="300" height="300">
+        <svg className="progress-ring" width="240" height="240">
           <circle
             className="progress-ring-background"
-            cx="150"
-            cy="150"
-            r="120"
+            cx="120"
+            cy="120"
+            r="100"
             fill="transparent"
             stroke="#e6e6e6"
-            strokeWidth="8"
+            strokeWidth="6"
           />
           <circle
             className="progress-ring-progress"
-            cx="150"
-            cy="150"
-            r="120"
+            cx="120"
+            cy="120"
+            r="100"
             fill="transparent"
-            strokeWidth="8"
-            strokeDasharray={`${2 * Math.PI * 120}`}
-            strokeDashoffset={`${2 * Math.PI * 120 * (1 - getProgress() / 100)}`}
-            transform="rotate(-90 150 150)"
+            strokeWidth="6"
+            strokeDasharray={`${2 * Math.PI * 100}`}
+            strokeDashoffset={`${2 * Math.PI * 100 * (1 - getProgress() / 100)}`}
+            transform="rotate(-90 120 120)"
           />
         </svg>
         <div className="timer-display">
@@ -122,18 +122,6 @@ const Timer = ({ initialTime, isRunning, onToggle, onReset, onComplete, sessionT
             <div className="current-task">{currentTask}</div>
           )}
         </div>
-      </div>
-      
-      <div className="timer-controls">
-        <button 
-          className={`play-pause-btn ${isRunning ? 'pause' : 'play'}`}
-          onClick={onToggle}
-        >
-          {isRunning ? '⏸️' : '▶️'}
-        </button>
-        <button className="reset-btn" onClick={handleReset}>
-          🔄
-        </button>
       </div>
     </div>
   );

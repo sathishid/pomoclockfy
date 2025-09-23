@@ -5,41 +5,188 @@
   flex-direction: column;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
+  transition: background 0.5s ease;
+}
+
+/* Session-specific backgrounds */
+.App.work {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.App.break {
+  background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+}
+
+.App.longBreak {
+  background: linear-gradient(135deg, #45b7d1 0%, #2980b9 100%);
 }
 
 .App-header {
-  padding: 2rem 1rem 1rem;
+  padding: 1rem;
+  position: relative;
 }
 
 .App-header h1 {
-  margin: 0 0 0.5rem;
-  font-size: 3rem;
+  margin: 0;
+  font-size: 1.8rem;
   font-weight: 700;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  text-align: left;
 }
 
 .subtitle {
   margin: 0;
-  font-size: 1.2rem;
-  opacity: 0.9;
+  font-size: 0.9rem;
+  opacity: 0.8;
   font-weight: 300;
+  position: absolute;
+  top: 3.2rem;
+  left: 1rem;
+  text-align: left;
 }
 
-.main-content {
+/* Settings Button - Top Right Corner */
+.settings-btn-corner {
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  width: 50px;
+  height: 50px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-btn-corner:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px) rotate(90deg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.app-content {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1rem;
-  gap: 1.5rem;
+  padding: 1rem;
+  gap: 1rem;
+}
+
+/* Desktop Layout - Three Column */
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  max-width: 1400px;
+  margin-top: 0.5rem;
+}
+
+.main-timer-section {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 350px;
+}
+
+.left-panel {
+  flex: 3;
+  max-width: 550px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.center-panel {
+  flex: 2;
+  max-width: 350px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.right-panel {
+  flex: 0.8;
+  max-width: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+/* Control Buttons Section */
+.control-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+  width: 100%;
+}
+
+.control-buttons .play-pause-btn,
+.control-buttons .reset-btn {
+  width: 50px;
+  height: 50px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  color: white;
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.control-buttons .play-pause-btn:hover,
+.control-buttons .reset-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.control-buttons .play-pause-btn.pause {
+  background: rgba(255, 107, 107, 0.3);
+  border-color: rgba(255, 107, 107, 0.5);
+}
+
+.control-buttons .play-pause-btn.play {
+  background: rgba(76, 175, 80, 0.3);
+  border-color: rgba(76, 175, 80, 0.5);
 }
 
 /* Session Tabs */
 .session-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 1rem;
+  width: 100%;
+  justify-content: center;
 }
 
 .session-tab {
@@ -76,20 +223,20 @@
 /* Task Input Section */
 .task-section {
   width: 100%;
-  max-width: 500px;
 }
 
 .task-input {
   width: 100%;
-  padding: 1rem 1.5rem;
+  padding: 1.2rem 1.5rem;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 15px;
   background: rgba(255, 255, 255, 0.1);
   color: white;
-  font-size: 1rem;
+  font-size: 1.1rem;
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
   box-sizing: border-box;
+  text-align: center;
 }
 
 .task-input::placeholder {
@@ -140,8 +287,8 @@
 /* Task History */
 .task-history {
   width: 100%;
-  max-width: 800px;
-  margin-top: 2rem;
+  max-width: 1400px;
+  margin: 2rem auto;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 15px;
   padding: 1.5rem;
@@ -181,7 +328,7 @@
 
 .task-info {
   flex: 1;
-  text-align: left;
+  text-align: center;
 }
 
 .task-name {
@@ -215,6 +362,7 @@
 
 .session-info {
   text-align: center;
+  width: 100%;
 }
 
 .session-info h2 {
@@ -227,30 +375,6 @@
   margin: 0;
   font-size: 1.1rem;
   opacity: 0.9;
-}
-
-.controls {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-}
-
-.settings-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 50px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
-}
-
-.settings-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.5);
-  transform: translateY(-2px);
 }
 
 @media (max-width: 768px) {
@@ -267,9 +391,34 @@
     gap: 1rem;
   }
 
+  /* Mobile Layout - Single Column */
+  .main-timer-section {
+    flex-direction: column;
+    gap: 2rem;
+    align-items: center;
+    min-height: auto;
+  }
+
+  .left-panel,
+  .center-panel,
+  .right-panel {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .center-panel,
+  .right-panel {
+    align-items: center;
+  }
+
   .session-tabs {
+    flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
+  }
+
+  .task-input {
+    text-align: left;
   }
 
   .session-tab {
@@ -308,5 +457,14 @@
 
   .task-name {
     font-size: 0.9rem;
+  }
+
+  /* Mobile Settings Button */
+  .settings-btn-corner {
+    top: 1rem;
+    right: 1rem;
+    width: 45px;
+    height: 45px;
+    font-size: 1.1rem;
   }
 }

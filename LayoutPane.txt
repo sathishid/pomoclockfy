@@ -1,0 +1,10 @@
+┌─────────────────┬─────────────────┐─────────────────┐
+│   1st  PANEL    │   2nd PANEL     │ 3rd Panel       |
+│                 │                 │                 │
+│ • Session Tabs  │ • Timer Circle  │ * Start Button  │
+| * Task Input    |                 | * Reset Button  │
+│ • Session Info  │                 │ * Done Button   │
+│                 │                 │                 │
+│                 │                 │                 │
+└─────────────────┴─────────────────┴─────────────────┘ 
+[Task History - Full Width]

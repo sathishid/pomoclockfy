@@ -90,88 +90,110 @@ function App() {
   };
 
   return (
-    <div className="App">
+    <div className={`App ${currentSession}`}>
       <header className="App-header">
         <h1>Pomoclockfy</h1>
         <p className="subtitle">Stay focused, stay productive</p>
       </header>
+
+      {/* Settings Button - Top Right Corner */}
+      <button 
+        className="settings-btn-corner"
+        onClick={() => setShowSettings(!showSettings)}
+        title="Settings"
+      >
+        ⚙️
+      </button>
       
       <main className="main-content">
-        {/* Session Type Tabs */}
-        <div className="session-tabs">
-          <button
-            className={`session-tab ${currentSession === 'work' ? 'active' : ''}`}
-            onClick={() => handleSessionTypeChange('work')}
-            disabled={isRunning}
-          >
-            Pomo
-          </button>
-          <button
-            className={`session-tab ${currentSession === 'break' ? 'active' : ''}`}
-            onClick={() => handleSessionTypeChange('break')}
-            disabled={isRunning}
-          >
-            Short Break
-          </button>
-          <button
-            className={`session-tab ${currentSession === 'longBreak' ? 'active' : ''}`}
-            onClick={() => handleSessionTypeChange('longBreak')}
-            disabled={isRunning}
-          >
-            Long Break
-          </button>
-        </div>
+        <div className="app-layout">
+          {/* Three Column Layout */}
+          <div className="main-timer-section">
+            {/* 1st Panel - Session Tabs & Task Input */}
+            <div className="left-panel">
+              <div className="session-tabs">
+                <button
+                  className={`session-tab ${currentSession === 'work' ? 'active' : ''}`}
+                  onClick={() => handleSessionTypeChange('work')}
+                  disabled={isRunning}
+                >
+                  Pomo
+                </button>
+                <button
+                  className={`session-tab ${currentSession === 'break' ? 'active' : ''}`}
+                  onClick={() => handleSessionTypeChange('break')}
+                  disabled={isRunning}
+                >
+                  Short Break
+                </button>
+                <button
+                  className={`session-tab ${currentSession === 'longBreak' ? 'active' : ''}`}
+                  onClick={() => handleSessionTypeChange('longBreak')}
+                  disabled={isRunning}
+                >
+                  Long Break
+                </button>
+              </div>
 
-        {/* Task Input */}
-        <div className="task-section">
-          <input
-            type="text"
-            className="task-input"
-            placeholder="What are you working on?"
-            value={currentTask}
-            onChange={(e) => setCurrentTask(e.target.value)}
-            disabled={isRunning}
-          />
-        </div>
+              <div className="task-section">
+                <input
+                  type="text"
+                  className="task-input"
+                  placeholder="What are you working on?"
+                  value={currentTask}
+                  onChange={(e) => setCurrentTask(e.target.value)}
+                  disabled={isRunning}
+                />
+              </div>
 
-        <div className="timer-section">
-          <Timer
-            key={timerKey}
-            initialTime={getCurrentSessionTime()}
-            isRunning={isRunning}
-            onToggle={handleToggleTimer}
-            onReset={resetTimer}
-            onComplete={handleSessionComplete}
-            sessionType={currentSession}
-            currentTask={currentTask}
-            startTime={startTime}
-          />
-          
-          {/* Done Button */}
-          {currentTask.trim() && startTime && (
-            <button 
-              className="done-btn"
-              onClick={handleMarkDone}
-            >
-              Done
-            </button>
-          )}
-        </div>
+              <div className="session-info">
+                <p>Sessions completed: {sessionsCompleted}</p>
+                {startTime && (
+                  <p>Started at: {startTime.toLocaleTimeString()}</p>
+                )}
+              </div>
+            </div>
 
-        <div className="session-info">
-          <p>Sessions completed: {sessionsCompleted}</p>
-          {startTime && (
-            <p>Started at: {startTime.toLocaleTimeString()}</p>
-          )}
-        </div>
+            {/* 2nd Panel - Timer Circle */}
+            <div className="center-panel">
+              <Timer
+                key={timerKey}
+                initialTime={getCurrentSessionTime()}
+                isRunning={isRunning}
+                onToggle={handleToggleTimer}
+                onReset={resetTimer}
+                onComplete={handleSessionComplete}
+                sessionType={currentSession}
+                currentTask={currentTask}
+                startTime={startTime}
+              />
+            </div>
 
-        <div className="controls">
-          <button 
-            className="settings-btn"
-            onClick={() => setShowSettings(!showSettings)}
-          >
-            ⚙️ Settings
-          </button>
+            {/* 3rd Panel - Control Buttons */}
+            <div className="right-panel">
+              <div className="control-buttons">
+                <button 
+                  className={`play-pause-btn ${isRunning ? 'pause' : 'play'}`}
+                  onClick={handleToggleTimer}
+                >
+                  {isRunning ? '⏸️' : '▶️'}
+                </button>
+                
+                <button className="reset-btn" onClick={resetTimer}>
+                  🔄
+                </button>
+
+                {currentTask.trim() && startTime && (
+                  <button 
+                    className="done-btn"
+                    onClick={handleMarkDone}
+                  >
+                    Done
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Task History Section */}
