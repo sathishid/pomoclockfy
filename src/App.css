@@ -1,0 +1,185 @@
+.App {
+  text-align: center;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.App-header {
+  padding: 2rem 1rem 1rem;
+}
+
+.App-header h1 {
+  margin: 0 0 0.5rem;
+  font-size: 3rem;
+  font-weight: 700;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 1.2rem;
+  opacity: 0.9;
+  font-weight: 300;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  gap: 1.5rem;
+}
+
+/* Session Tabs */
+.session-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.session-tab {
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 0.5rem 1.5rem;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  font-weight: 500;
+}
+
+.session-tab:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.session-tab.active {
+  background: rgba(255, 255, 255, 0.9);
+  color: #667eea;
+  border-color: rgba(255, 255, 255, 0.9);
+  font-weight: bold;
+}
+
+.session-tab:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Task Input Section */
+.task-section {
+  width: 100%;
+  max-width: 500px;
+}
+
+.task-input {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 1rem;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.task-input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.task-input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.task-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Timer Section */
+.timer-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.session-info {
+  text-align: center;
+}
+
+.session-info h2 {
+  margin: 0 0 1rem;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.session-info p {
+  margin: 0;
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.controls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.settings-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.settings-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .App-header h1 {
+    font-size: 2.5rem;
+  }
+  
+  .session-info h2 {
+    font-size: 1.5rem;
+  }
+  
+  .main-content {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .session-tabs {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .session-tab {
+    padding: 0.4rem 1rem;
+    font-size: 0.8rem;
+  }
+
+  .task-input {
+    padding: 0.8rem 1rem;
+    font-size: 0.9rem;
+  }
+}
