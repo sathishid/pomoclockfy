@@ -16,6 +16,57 @@ function App() {
   const [completedTasks, setCompletedTasks] = useState([]);
   const [timerKey, setTimerKey] = useState(0);
 
+  // Load data from localStorage on component mount
+  useEffect(() => {
+    const savedTasks = localStorage.getItem('pomoclockfy-tasks');
+    const savedSettings = localStorage.getItem('pomoclockfy-settings');
+    
+    if (savedTasks) {
+      try {
+        const tasks = JSON.parse(savedTasks);
+        // Convert date strings back to Date objects
+        const tasksWithDates = tasks.map(task => ({
+          ...task,
+          startTime: new Date(task.startTime),
+          endTime: new Date(task.endTime)
+        }));
+        setCompletedTasks(tasksWithDates);
+      } catch (error) {
+        console.error('Error loading tasks from localStorage:', error);
+      }
+    }
+
+    if (savedSettings) {
+      try {
+        const settings = JSON.parse(savedSettings);
+        setWorkTime(settings.workTime || 25);
+        setBreakTime(settings.breakTime || 5);
+        setLongBreakTime(settings.longBreakTime || 15);
+        setSessionsCompleted(settings.sessionsCompleted || 0);
+      } catch (error) {
+        console.error('Error loading settings from localStorage:', error);
+      }
+    }
+  }, []);
+
+  // Save tasks to localStorage whenever completedTasks changes
+  useEffect(() => {
+    if (completedTasks.length > 0) {
+      localStorage.setItem('pomoclockfy-tasks', JSON.stringify(completedTasks));
+    }
+  }, [completedTasks]);
+
+  // Save settings to localStorage whenever they change
+  useEffect(() => {
+    const settings = {
+      workTime,
+      breakTime,
+      longBreakTime,
+      sessionsCompleted
+    };
+    localStorage.setItem('pomoclockfy-settings', JSON.stringify(settings));
+  }, [workTime, breakTime, longBreakTime, sessionsCompleted]);
+
   const getCurrentSessionTime = () => {
     switch (currentSession) {
       case 'work':
@@ -67,14 +118,14 @@ function App() {
     }
   };
 
-  const handleMarkDone = () => {
+    const handleMarkDone = () => {
     if (currentTask.trim() && startTime) {
       const endTime = new Date();
-      const duration = Math.round((endTime - startTime) / 1000 / 60); // duration in minutes
+      const duration = Math.round((endTime - startTime) / (1000 * 60)); // duration in minutes
       
       const completedTask = {
         id: Date.now(),
-        task: currentTask,
+        task: currentTask.trim(),
         sessionType: currentSession,
         startTime: startTime,
         endTime: endTime,
@@ -87,6 +138,70 @@ function App() {
       setStartTime(null);
       setTimerKey(prev => prev + 1); // Force timer reset
     }
+  };
+
+  const handleDuplicateTask = (taskName) => {
+    if (!isRunning) {
+      setCurrentTask(taskName);
+    }
+  };
+
+  const handleDeleteTask = (taskId) => {
+    if (window.confirm('Are you sure you want to delete this task from history?')) {
+      setCompletedTasks(prev => prev.filter(task => task.id !== taskId));
+    }
+  };
+
+  const getTodayTimeSpent = () => {
+    const today = new Date().toDateString();
+    const todayTasks = completedTasks.filter(task => 
+      task.endTime.toDateString() === today
+    );
+    const totalMinutes = todayTasks.reduce((sum, task) => sum + task.duration, 0);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+  };
+
+  const handleClearAllData = () => {
+    if (window.confirm('Are you sure you want to clear all task history and reset settings? This cannot be undone.')) {
+      setCompletedTasks([]);
+      setWorkTime(25);
+      setBreakTime(5);
+      setLongBreakTime(15);
+      setSessionsCompleted(0);
+      localStorage.removeItem('pomoclockfy-tasks');
+      localStorage.removeItem('pomoclockfy-settings');
+    }
+  };
+
+  const handleExportData = () => {
+    const data = {
+      tasks: completedTasks,
+      settings: {
+        workTime,
+        breakTime,
+        longBreakTime,
+        sessionsCompleted
+      },
+      exportDate: new Date().toISOString()
+    };
+    
+    const dataStr = JSON.stringify(data, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `pomoclockfy-data-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -199,7 +314,12 @@ function App() {
         {/* Task History Section */}
         {completedTasks.length > 0 && (
           <div className="task-history">
-            <h3>Completed Tasks</h3>
+            <div className="history-header">
+              <h3>Completed Tasks</h3>
+              <div className="daily-stats">
+                <span className="today-time">Today: {getTodayTimeSpent()}</span>
+              </div>
+            </div>
             <div className="task-list">
               {completedTasks.slice(0, 5).map((task) => (
                 <div key={task.id} className="task-item">
@@ -214,6 +334,23 @@ function App() {
                     <div className="start-time">{task.startTime.toLocaleTimeString()}</div>
                     <div className="end-time">{task.endTime.toLocaleTimeString()}</div>
                     <div className="duration">{task.duration} min</div>
+                  </div>
+                  <div className="task-actions">
+                    <button 
+                      className="duplicate-btn"
+                      onClick={() => handleDuplicateTask(task.task)}
+                      disabled={isRunning}
+                      title="Start new session with this task"
+                    >
+                      🔄 Start New
+                    </button>
+                    <button 
+                      className="delete-btn"
+                      onClick={() => handleDeleteTask(task.id)}
+                      title="Delete this task from history"
+                    >
+                      🗑️
+                    </button>
                   </div>
                 </div>
               ))}
@@ -230,6 +367,10 @@ function App() {
             onBreakTimeChange={setBreakTime}
             onLongBreakTimeChange={setLongBreakTime}
             onClose={() => setShowSettings(false)}
+            onClearData={handleClearAllData}
+            onExportData={handleExportData}
+            totalTasks={completedTasks.length}
+            todayTimeSpent={getTodayTimeSpent()}
           />
         )}
       </main>

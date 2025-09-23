@@ -8,7 +8,11 @@ const Settings = ({
   onWorkTimeChange,
   onBreakTimeChange,
   onLongBreakTimeChange,
-  onClose
+  onClose,
+  onClearData,
+  onExportData,
+  totalTasks,
+  todayTimeSpent
 }) => {
   const [tempWorkTime, setTempWorkTime] = useState(workTime);
   const [tempBreakTime, setTempBreakTime] = useState(breakTime);
@@ -71,6 +75,25 @@ const Settings = ({
               value={tempLongBreakTime}
               onChange={(e) => setTempLongBreakTime(parseInt(e.target.value) || 15)}
             />
+          </div>
+        </div>
+        
+        {/* Data Management Section */}
+        <div className="data-management">
+          <h4>Data Management</h4>
+          <div className="data-stats">
+            <p>📊 Total completed tasks: <strong>{totalTasks}</strong></p>
+            <p>⏰ Time spent today: <strong>{todayTimeSpent}</strong></p>
+            <p>💾 Data is automatically saved to your browser</p>
+          </div>
+          
+          <div className="data-actions">
+            <button className="export-btn" onClick={onExportData}>
+              📥 Export Data
+            </button>
+            <button className="clear-btn" onClick={onClearData}>
+              🗑️ Clear All Data
+            </button>
           </div>
         </div>
         
