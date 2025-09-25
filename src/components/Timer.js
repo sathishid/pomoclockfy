@@ -5,29 +5,48 @@ const Timer = ({ initialTime, isRunning, onToggle, onReset, onComplete, sessionT
   const [timeLeft, setTimeLeft] = useState(initialTime * 60);
   const intervalRef = useRef(null);
   const audioRef = useRef(null);
+  const [audioEnabled, setAudioEnabled] = useState(false); // Add this state
 
   // Initialize audio
   useEffect(() => {
-    audioRef.current = new Audio('/alarm.wav'); // Use the existing alarm.wav file
-    audioRef.current.volume = 0.5; // Set volume (0.0 to 1.0)
+    audioRef.current = new Audio('/alarm.wav');
+    audioRef.current.volume = 0.5;
+    audioRef.current.preload = 'auto'; // Add preloading
+    
+    // Test audio on first user interaction
+    const enableAudio = () => {
+      if (audioRef.current && !audioEnabled) {
+        audioRef.current.play().then(() => {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+          setAudioEnabled(true);
+        }).catch(error => {
+          console.log('Audio initialization failed:', error);
+        });
+      }
+    };
+    
+    // Add click listener to enable audio
+    document.addEventListener('click', enableAudio, { once: true });
     
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
       }
+      document.removeEventListener('click', enableAudio);
     };
-  }, []);
+  }, [audioEnabled]);
 
   const playAlarmSound = () => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0; // Reset to beginning
+    if (audioRef.current && audioEnabled) {
+      audioRef.current.currentTime = 0;
       audioRef.current.play().catch(error => {
         console.log('Audio play failed:', error);
-        // Fallback to Web Audio API if file fails
         playFallbackAlarm();
       });
     } else {
+      console.log('Audio not enabled or not loaded, using fallback');
       playFallbackAlarm();
     }
   };
