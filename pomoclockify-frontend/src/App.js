@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import Timer from './components/Timer';
 import Settings from './components/Settings';
+import { taskAPI, settingsAPI, checkServerHealth, syncLocalDataToServer } from './services/api';
 
 function App() {
   const [workTime, setWorkTime] = useState(25); // minutes
@@ -15,57 +16,135 @@ function App() {
   const [startTime, setStartTime] = useState(null);
   const [completedTasks, setCompletedTasks] = useState([]);
   const [timerKey, setTimerKey] = useState(0);
+  const [serverAvailable, setServerAvailable] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load data from localStorage on component mount
+  // Load data from server or localStorage on component mount
   useEffect(() => {
-    const savedTasks = localStorage.getItem('pomoclockfy-tasks');
-    const savedSettings = localStorage.getItem('pomoclockfy-settings');
-    
-    if (savedTasks) {
-      try {
-        const tasks = JSON.parse(savedTasks);
-        // Convert date strings back to Date objects
-        const tasksWithDates = tasks.map(task => ({
-          ...task,
-          startTime: new Date(task.startTime),
-          endTime: new Date(task.endTime)
-        }));
-        setCompletedTasks(tasksWithDates);
-      } catch (error) {
-        console.error('Error loading tasks from localStorage:', error);
+    const loadData = async () => {
+      setIsLoading(true);
+      
+      // Check if server is available
+      const serverStatus = await checkServerHealth();
+      setServerAvailable(serverStatus);
+      
+      if (serverStatus) {
+        try {
+          // Load from server
+          console.log('Loading data from server...');
+          const [tasks, settings] = await Promise.all([
+            taskAPI.getAllTasks(),
+            settingsAPI.getSettings()
+          ]);
+          
+          setCompletedTasks(tasks);
+          setWorkTime(settings.workTime);
+          setBreakTime(settings.breakTime);
+          setLongBreakTime(settings.longBreakTime);
+          setSessionsCompleted(settings.sessionsCompleted);
+          
+          // Also save to localStorage as backup
+          localStorage.setItem('pomoclockfy-tasks', JSON.stringify(tasks));
+          localStorage.setItem('pomoclockfy-settings', JSON.stringify(settings));
+          
+        } catch (error) {
+          console.warn('Failed to load from server, falling back to localStorage');
+          loadFromLocalStorage();
+        }
+      } else {
+        console.warn('Server unavailable, loading from localStorage');
+        loadFromLocalStorage();
       }
-    }
+      
+      setIsLoading(false);
+    };
 
-    if (savedSettings) {
-      try {
-        const settings = JSON.parse(savedSettings);
-        setWorkTime(settings.workTime || 25);
-        setBreakTime(settings.breakTime || 5);
-        setLongBreakTime(settings.longBreakTime || 15);
-        setSessionsCompleted(settings.sessionsCompleted || 0);
-      } catch (error) {
-        console.error('Error loading settings from localStorage:', error);
+    const loadFromLocalStorage = () => {
+      const savedTasks = localStorage.getItem('pomoclockfy-tasks');
+      const savedSettings = localStorage.getItem('pomoclockfy-settings');
+      
+      if (savedTasks) {
+        try {
+          const tasks = JSON.parse(savedTasks);
+          // Convert date strings back to Date objects
+          const tasksWithDates = tasks.map(task => ({
+            ...task,
+            startTime: new Date(task.startTime),
+            endTime: new Date(task.endTime)
+          }));
+          setCompletedTasks(tasksWithDates);
+        } catch (error) {
+          console.error('Error loading tasks from localStorage:', error);
+        }
       }
-    }
+
+      if (savedSettings) {
+        try {
+          const settings = JSON.parse(savedSettings);
+          setWorkTime(settings.workTime || 25);
+          setBreakTime(settings.breakTime || 5);
+          setLongBreakTime(settings.longBreakTime || 15);
+          setSessionsCompleted(settings.sessionsCompleted || 0);
+        } catch (error) {
+          console.error('Error loading settings from localStorage:', error);
+        }
+      }
+    };
+
+    loadData();
   }, []);
 
-  // Save tasks to localStorage whenever completedTasks changes
+  // Periodic server connection check (every 30 seconds when offline)
   useEffect(() => {
-    if (completedTasks.length > 0) {
+    if (!serverAvailable) {
+      const interval = setInterval(async () => {
+        console.log('Checking server connection...');
+        const isOnline = await checkServerHealth();
+        if (isOnline) {
+          setServerAvailable(true);
+          
+          // Try to sync local data to server
+          try {
+            await syncLocalDataToServer();
+            console.log('Successfully reconnected and synced data');
+          } catch (error) {
+            console.warn('Reconnected but failed to sync data:', error.message);
+          }
+        }
+      }, 30000); // Check every 30 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [serverAvailable]);
+
+  // Save data to server and localStorage whenever they change
+  useEffect(() => {
+    if (completedTasks.length > 0 && !isLoading) {
+      // Always save to localStorage as backup
       localStorage.setItem('pomoclockfy-tasks', JSON.stringify(completedTasks));
     }
-  }, [completedTasks]);
+  }, [completedTasks, isLoading]);
 
-  // Save settings to localStorage whenever they change
   useEffect(() => {
-    const settings = {
-      workTime,
-      breakTime,
-      longBreakTime,
-      sessionsCompleted
-    };
-    localStorage.setItem('pomoclockfy-settings', JSON.stringify(settings));
-  }, [workTime, breakTime, longBreakTime, sessionsCompleted]);
+    if (!isLoading) {
+      const settings = {
+        workTime,
+        breakTime,
+        longBreakTime,
+        sessionsCompleted
+      };
+      
+      // Always save to localStorage as backup
+      localStorage.setItem('pomoclockfy-settings', JSON.stringify(settings));
+      
+      // Try to save to server if available
+      if (serverAvailable) {
+        settingsAPI.updateSettings(settings).catch(error => {
+          console.warn('Failed to sync settings to server:', error.message);
+        });
+      }
+    }
+  }, [workTime, breakTime, longBreakTime, sessionsCompleted, serverAvailable, isLoading]);
 
   const getCurrentSessionTime = () => {
     switch (currentSession) {
@@ -80,10 +159,19 @@ function App() {
     }
   };
 
-  const handleSessionComplete = () => {
+  const handleSessionComplete = async () => {
     if (currentSession === 'work') {
       const newSessionsCompleted = sessionsCompleted + 1;
       setSessionsCompleted(newSessionsCompleted);
+      
+      // Try to increment session count on server
+      if (serverAvailable) {
+        try {
+          await settingsAPI.incrementSession();
+        } catch (error) {
+          console.warn('Failed to sync session increment to server:', error.message);
+        }
+      }
       
       // Every 4 work sessions, take a long break
       if (newSessionsCompleted % 4 === 0) {
@@ -118,13 +206,13 @@ function App() {
     }
   };
 
-    const handleMarkDone = () => {
+  const handleMarkDone = async () => {
     if (currentTask.trim() && startTime) {
       const endTime = new Date();
       const duration = Math.round((endTime - startTime) / (1000 * 60)); // duration in minutes
       
       const completedTask = {
-        id: Date.now(),
+        id: Date.now(), // Temporary ID for optimistic update
         task: currentTask.trim(),
         sessionType: currentSession,
         startTime: startTime,
@@ -132,7 +220,25 @@ function App() {
         duration: duration
       };
       
+      // Optimistic update
       setCompletedTasks(prev => [completedTask, ...prev]);
+      
+      // Try to save to server
+      if (serverAvailable) {
+        try {
+          const savedTask = await taskAPI.createTask(completedTask);
+          // Update with server-generated ID and data
+          setCompletedTasks(prev => 
+            prev.map(task => 
+              task.id === completedTask.id ? savedTask : task
+            )
+          );
+        } catch (error) {
+          console.warn('Failed to save task to server:', error.message);
+          // Task already added optimistically, just warn user
+        }
+      }
+      
       setCurrentTask('');
       setIsRunning(false);
       setStartTime(null);
@@ -146,9 +252,23 @@ function App() {
     }
   };
 
-  const handleDeleteTask = (taskId) => {
+  const handleDeleteTask = async (taskId) => {
     if (window.confirm('Are you sure you want to delete this task from history?')) {
+      // Optimistic update
+      const taskToDelete = completedTasks.find(task => task.id === taskId);
       setCompletedTasks(prev => prev.filter(task => task.id !== taskId));
+      
+      // Try to delete from server
+      if (serverAvailable && taskToDelete && typeof taskToDelete.id === 'number' && taskToDelete.id > 1000000000000) {
+        // Only try to delete if it's a server-generated ID (not timestamp ID)
+        try {
+          await taskAPI.deleteTask(taskId);
+        } catch (error) {
+          console.warn('Failed to delete task from server:', error.message);
+          // Revert optimistic update
+          setCompletedTasks(prev => [taskToDelete, ...prev].sort((a, b) => b.endTime - a.endTime));
+        }
+      }
     }
   };
 
@@ -167,8 +287,9 @@ function App() {
     return `${minutes}m`;
   };
 
-  const handleClearAllData = () => {
+  const handleClearAllData = async () => {
     if (window.confirm('Are you sure you want to clear all task history and reset settings? This cannot be undone.')) {
+      // Clear local state
       setCompletedTasks([]);
       setWorkTime(25);
       setBreakTime(5);
@@ -176,6 +297,18 @@ function App() {
       setSessionsCompleted(0);
       localStorage.removeItem('pomoclockfy-tasks');
       localStorage.removeItem('pomoclockfy-settings');
+      
+      // Try to reset settings on server
+      if (serverAvailable) {
+        try {
+          await settingsAPI.resetSettings();
+          // Note: We don't have a bulk delete API for tasks, 
+          // so tasks will remain on server but be cleared locally
+          console.warn('Settings reset on server. Tasks cleared locally but may remain on server.');
+        } catch (error) {
+          console.warn('Failed to reset settings on server:', error.message);
+        }
+      }
     }
   };
 
@@ -209,6 +342,13 @@ function App() {
       <header className="App-header">
         <h1>Pomoclockfy</h1>
         <p className="subtitle">Stay focused, stay productive</p>
+        {!isLoading && (
+          <div className="server-status">
+            <span className={`status-indicator ${serverAvailable ? 'online' : 'offline'}`}>
+              {serverAvailable ? '🟢 Server Online' : '🔴 Offline Mode'}
+            </span>
+          </div>
+        )}
       </header>
 
       {/* Settings Button - Top Right Corner */}
@@ -221,6 +361,12 @@ function App() {
       </button>
       
       <main className="main-content">
+        {isLoading ? (
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <p>Loading your data...</p>
+          </div>
+        ) : (
         <div className="app-layout">
           {/* Three Column Layout */}
           <div className="main-timer-section">
@@ -309,10 +455,9 @@ function App() {
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Task History Section */}
-        {completedTasks.length > 0 && (
+          {/* Task History Section */}
+          {completedTasks.length > 0 && (
           <div className="task-history">
             <div className="history-header">
               <h3>Completed Tasks</h3>
@@ -356,6 +501,8 @@ function App() {
               ))}
             </div>
           </div>
+        )}
+        </div>
         )}
 
         {showSettings && (
