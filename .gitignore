@@ -1,15 +1,2 @@
-pomoclockfy-backend/target/classes/application.properties
-pomoclockfy-backend/target/classes/schema.sql
-pomoclockfy-backend/target/classes/com/pomoclockfy/PomoclockfyBackendApplication.class
-pomoclockfy-backend/target/classes/com/pomoclockfy/config/CorsConfig.class
-pomoclockfy-backend/target/classes/com/pomoclockfy/controller/SettingsController.class
-pomoclockfy-backend/target/classes/com/pomoclockfy/controller/TaskController.class
-pomoclockfy-backend/target/classes/com/pomoclockfy/entity/SessionType.class
-pomoclockfy-backend/target/classes/com/pomoclockfy/entity/Settings.class
-pomoclockfy-backend/target/classes/com/pomoclockfy/entity/Task.class
-pomoclockfy-backend/target/classes/com/pomoclockfy/repository/SettingsRepository.class
-pomoclockfy-backend/target/classes/com/pomoclockfy/repository/TaskRepository.class
-pomoclockfy-backend/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst
-pomoclockfy-backend/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst
-pomoclockfy-backend/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst
+pomoclockfy-backend/target/**
 .DS_Store
