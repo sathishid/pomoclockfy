@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './Timer.css';
 
 const Timer = ({ initialTime, isRunning, onToggle, onReset, onComplete, sessionType, currentTask, startTime }) => {
@@ -38,20 +38,7 @@ const Timer = ({ initialTime, isRunning, onToggle, onReset, onComplete, sessionT
     };
   }, [audioEnabled]);
 
-  const playAlarmSound = () => {
-    if (audioRef.current && audioEnabled) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(error => {
-        console.log('Audio play failed:', error);
-        playFallbackAlarm();
-      });
-    } else {
-      console.log('Audio not enabled or not loaded, using fallback');
-      playFallbackAlarm();
-    }
-  };
-
-  const playFallbackAlarm = () => {
+  const playFallbackAlarm = useCallback(() => {
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
@@ -69,7 +56,20 @@ const Timer = ({ initialTime, isRunning, onToggle, onReset, onComplete, sessionT
     
     oscillator.start(audioContext.currentTime);
     oscillator.stop(audioContext.currentTime + 0.6);
-  };
+  }, []);
+
+  const playAlarmSound = useCallback(() => {
+    if (audioRef.current && audioEnabled) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(error => {
+        console.log('Audio play failed:', error);
+        playFallbackAlarm();
+      });
+    } else {
+      console.log('Audio not enabled or not loaded, using fallback');
+      playFallbackAlarm();
+    }
+  }, [audioEnabled, playFallbackAlarm]);
 
   useEffect(() => {
     setTimeLeft(initialTime * 60);
@@ -92,7 +92,7 @@ const Timer = ({ initialTime, isRunning, onToggle, onReset, onComplete, sessionT
     }
 
     return () => clearInterval(intervalRef.current);
-  }, [isRunning, timeLeft, onComplete]);
+  }, [isRunning, timeLeft, onComplete, playAlarmSound]);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -103,11 +103,6 @@ const Timer = ({ initialTime, isRunning, onToggle, onReset, onComplete, sessionT
   const getProgress = () => {
     const totalSeconds = initialTime * 60;
     return ((totalSeconds - timeLeft) / totalSeconds) * 100;
-  };
-
-  const handleReset = () => {
-    setTimeLeft(initialTime * 60);
-    onReset();
   };
 
   return (
