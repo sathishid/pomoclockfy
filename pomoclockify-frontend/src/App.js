@@ -18,6 +18,81 @@ function App() {
   const [timerKey, setTimerKey] = useState(0);
   const [serverAvailable, setServerAvailable] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const DAYS_PER_PAGE = 7;
+  const [historyPage, setHistoryPage] = useState(1);
+
+  const startOfDay = (date) => {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  };
+
+  const formatDateLabel = (date) => {
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) return 'Today';
+    if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
+
+    return date.toLocaleDateString(undefined, {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  const groupTasksByDate = (tasks) => {
+    const grouped = tasks.reduce((acc, task) => {
+      const dateKey = task.endTime.toDateString();
+      if (!acc[dateKey]) acc[dateKey] = [];
+      acc[dateKey].push(task);
+      return acc;
+    }, {});
+
+    return Object.keys(grouped)
+      .sort((a, b) => new Date(b) - new Date(a))
+      .map((dateKey) => ({
+        dateKey,
+        label: formatDateLabel(new Date(dateKey)),
+        tasks: grouped[dateKey].slice().sort((a, b) => b.endTime - a.endTime)
+      }));
+  };
+
+  const groupedTasks = groupTasksByDate(completedTasks);
+
+  const getTotalPages = () => {
+    if (groupedTasks.length === 0) return 1;
+    const todayStart = startOfDay(new Date());
+    const oldestDate = startOfDay(new Date(groupedTasks[groupedTasks.length - 1].dateKey));
+    const daySpan = Math.floor((todayStart - oldestDate) / (1000 * 60 * 60 * 24)) + 1;
+    return Math.max(1, Math.ceil(daySpan / DAYS_PER_PAGE));
+  };
+
+  const totalPages = getTotalPages();
+
+  const getPageDateRange = (page) => {
+    const todayStart = startOfDay(new Date());
+    const rangeStart = new Date(todayStart);
+    rangeStart.setDate(rangeStart.getDate() - DAYS_PER_PAGE * (page - 1));
+    const rangeEnd = new Date(rangeStart);
+    rangeEnd.setDate(rangeEnd.getDate() - (DAYS_PER_PAGE - 1));
+    return { rangeStart, rangeEnd };
+  };
+
+  const { rangeStart, rangeEnd } = getPageDateRange(historyPage);
+
+  const pagedGroups = groupedTasks.filter((group) => {
+    const groupDate = startOfDay(new Date(group.dateKey));
+    return groupDate <= rangeStart && groupDate >= rangeEnd;
+  });
+
+  useEffect(() => {
+    // Clamp page when task history changes
+    const maxPage = Math.max(1, Math.ceil(groupTasksByDate(completedTasks).length / DAYS_PER_PAGE));
+    setHistoryPage((prev) => Math.min(prev, maxPage));
+  }, [completedTasks]);
 
   // Load data from server or localStorage on component mount
   useEffect(() => {
@@ -455,50 +530,89 @@ function App() {
               </div>
             </div>
           </div>
-
-          {/* Task History Section */}
-          {completedTasks.length > 0 && (
+        {/* Task History Section with pagination (7 days per page) */}
+        {completedTasks.length > 0 && (
           <div className="task-history">
             <div className="history-header">
               <h3>Completed Tasks</h3>
-              <div className="daily-stats">
-                <span className="today-time">Today: {getTodayTimeSpent()}</span>
+              <div className="history-subtext">
+                Showing {rangeEnd.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                {' '}to {rangeStart.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
               </div>
             </div>
             <div className="task-list">
-              {completedTasks.slice(0, 5).map((task) => (
-                <div key={task.id} className="task-item">
-                  <div className="task-info">
-                    <div className="task-name">{task.task}</div>
-                    <div className="task-type">
-                      {task.sessionType === 'work' ? 'Pomo' : 
-                       task.sessionType === 'break' ? 'Short Break' : 'Long Break'}
+              {pagedGroups.map((group) => (
+                <div key={group.dateKey} className="task-day-group">
+                  <div className="task-day-header">
+                    <h4>{group.label}</h4>
+                    <span className="task-count">{group.tasks.length} {group.tasks.length === 1 ? 'session' : 'sessions'}</span>
+                  </div>
+                  {group.tasks.map((task) => (
+                    <div key={task.id} className="task-item">
+                      <div className="task-info">
+                        <div className="task-name">{task.task}</div>
+                        <div className="task-type">
+                          {task.sessionType === 'work' ? 'Pomo' : 
+                           task.sessionType === 'break' ? 'Short Break' : 'Long Break'}
+                        </div>
+                      </div>
+                      <div className="task-times">
+                        <div className="start-time">{task.startTime.toLocaleTimeString()}</div>
+                        <div className="end-time">{task.endTime.toLocaleTimeString()}</div>
+                        <div className="duration">{task.duration} min</div>
+                      </div>
+                      <div className="task-actions">
+                        <button 
+                          className="duplicate-btn"
+                          onClick={() => handleDuplicateTask(task.task)}
+                          disabled={isRunning}
+                          title="Start new session with this task"
+                        >
+                          🔄 Start New
+                        </button>
+                        <button 
+                          className="delete-btn"
+                          onClick={() => handleDeleteTask(task.id)}
+                          title="Delete this task from history"
+                        >
+                          🗑️
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="task-times">
-                    <div className="start-time">{task.startTime.toLocaleTimeString()}</div>
-                    <div className="end-time">{task.endTime.toLocaleTimeString()}</div>
-                    <div className="duration">{task.duration} min</div>
-                  </div>
-                  <div className="task-actions">
-                    <button 
-                      className="duplicate-btn"
-                      onClick={() => handleDuplicateTask(task.task)}
-                      disabled={isRunning}
-                      title="Start new session with this task"
-                    >
-                      🔄 Start New
-                    </button>
-                    <button 
-                      className="delete-btn"
-                      onClick={() => handleDeleteTask(task.id)}
-                      title="Delete this task from history"
-                    >
-                      🗑️
-                    </button>
-                  </div>
+                  ))}
                 </div>
               ))}
+              <div className="history-pagination">
+                <button
+                  className="history-page-btn"
+                  onClick={() => setHistoryPage(1)}
+                  disabled={historyPage === 1}
+                >
+                  ⏮︎ First
+                </button>
+                <button
+                  className="history-page-btn"
+                  onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
+                  disabled={historyPage === 1}
+                >
+                  ◀︎ Prev
+                </button>
+                <span className="page-indicator">Page {historyPage} of {totalPages}</span>
+                <button
+                  className="history-page-btn"
+                  onClick={() => setHistoryPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={historyPage === totalPages}
+                >
+                  Next ▶︎
+                </button>
+                <button
+                  className="history-page-btn"
+                  onClick={() => setHistoryPage(totalPages)}
+                  disabled={historyPage === totalPages}
+                >
+                  Last ⏭︎
+                </button>
+              </div>
             </div>
           </div>
         )}
