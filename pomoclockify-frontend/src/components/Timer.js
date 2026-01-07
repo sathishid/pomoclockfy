@@ -4,8 +4,9 @@ import './Timer.css';
 const Timer = ({ initialTime, isRunning, onToggle, onReset, onComplete, sessionType, currentTask, startTime }) => {
   const [timeLeft, setTimeLeft] = useState(initialTime * 60);
   const intervalRef = useRef(null);
+  const endTimeRef = useRef(null); // Target timestamp when the timer should end
   const audioRef = useRef(null);
-  const [audioEnabled, setAudioEnabled] = useState(false); // Add this state
+  const [audioEnabled, setAudioEnabled] = useState(false);
 
   // Initialize audio
   useEffect(() => {
@@ -73,26 +74,45 @@ const Timer = ({ initialTime, isRunning, onToggle, onReset, onComplete, sessionT
 
   useEffect(() => {
     setTimeLeft(initialTime * 60);
+    endTimeRef.current = null;
   }, [initialTime]);
 
   useEffect(() => {
-    if (isRunning && timeLeft > 0) {
-      intervalRef.current = setInterval(() => {
-        setTimeLeft((prevTime) => {
-          if (prevTime <= 1) {
-            playAlarmSound(); // Play alarm when timer completes
-            onComplete();
-            return 0;
-          }
-          return prevTime - 1;
-        });
-      }, 1000);
-    } else {
+    if (!isRunning) {
       clearInterval(intervalRef.current);
+      intervalRef.current = null;
+      endTimeRef.current = null;
+      return undefined;
     }
 
-    return () => clearInterval(intervalRef.current);
-  }, [isRunning, timeLeft, onComplete, playAlarmSound]);
+    // Set the expected end timestamp when starting or resuming
+    if (!endTimeRef.current) {
+      endTimeRef.current = Date.now() + timeLeft * 1000;
+    }
+
+    const tick = () => {
+      const now = Date.now();
+      const remainingSeconds = Math.max(0, Math.round((endTimeRef.current - now) / 1000));
+      setTimeLeft(remainingSeconds);
+
+      if (remainingSeconds <= 0) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+        endTimeRef.current = null;
+        playAlarmSound();
+        onComplete();
+      }
+    };
+
+    // Tick immediately so background-tab throttling cannot hide completion
+    tick();
+    intervalRef.current = setInterval(tick, 1000);
+
+    return () => {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    };
+  }, [isRunning, playAlarmSound, onComplete]);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
