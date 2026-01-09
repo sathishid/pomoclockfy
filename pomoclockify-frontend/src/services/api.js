@@ -2,6 +2,7 @@ import axios from 'axios';
 
 // Base URL for the backend API
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+const isDevelopment = process.env.NODE_ENV === 'development';
 
 // Create axios instance with default configuration
 const api = axios.create({
@@ -9,17 +10,22 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 5000, // 5 second timeout
+  timeout: 10000, // 10 second timeout
+  withCredentials: false, // Explicitly set for security
 });
 
-// Add request interceptor for logging (development)
+// Add request interceptor for logging (development only)
 api.interceptors.request.use(
   (config) => {
-    console.log('API Request:', config.method?.toUpperCase(), config.url);
+    if (isDevelopment) {
+      console.log('API Request:', config.method?.toUpperCase(), config.url);
+    }
     return config;
   },
   (error) => {
-    console.error('API Request Error:', error);
+    if (isDevelopment) {
+      console.error('API Request Error:', error);
+    }
     return Promise.reject(error);
   }
 );
@@ -27,11 +33,15 @@ api.interceptors.request.use(
 // Add response interceptor for error handling
 api.interceptors.response.use(
   (response) => {
-    console.log('API Response:', response.status, response.config.url);
+    if (isDevelopment) {
+      console.log('API Response:', response.status, response.config.url);
+    }
     return response;
   },
   (error) => {
-    console.error('API Response Error:', error.response?.status, error.message);
+    if (isDevelopment) {
+      console.error('API Response Error:', error.response?.status, error.message);
+    }
     return Promise.reject(error);
   }
 );

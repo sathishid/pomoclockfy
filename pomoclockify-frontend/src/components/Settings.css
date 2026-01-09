@@ -189,24 +189,106 @@
   .settings-modal {
     min-width: 0;
     width: 90vw;
-    padding: 1.5rem;
+    padding: 1.25rem;
+    border-radius: 12px;
   }
-  
+
+  .settings-header h3 {
+    font-size: 1.3rem;
+  }
+
+  .setting-item label {
+    font-size: 0.95rem;
+  }
+
+  .setting-item input {
+    padding: 0.65rem;
+    font-size: 0.95rem;
+  }
+
   .settings-footer {
     flex-direction: column;
+    gap: 0.75rem;
   }
-  
+
   .cancel-btn,
   .save-btn {
     width: 100%;
+    padding: 0.7rem 1.25rem;
   }
-  
+
+  .data-stats {
+    padding: 0.75rem;
+  }
+
+  .data-stats p {
+    font-size: 0.85rem;
+  }
+
   .data-actions {
     flex-direction: column;
   }
-  
+
   .export-btn,
   .clear-btn {
     width: 100%;
+    padding: 0.65rem;
+  }
+
+  .data-management {
+    padding-top: 1rem;
+  }
+
+  .data-management h4 {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .settings-modal {
+    width: 95vw;
+    padding: 1rem;
+  }
+
+  .settings-header h3 {
+    font-size: 1.1rem;
+  }
+
+  .close-btn {
+    font-size: 1.5rem;
+  }
+
+  .settings-content {
+    gap: 1rem;
+  }
+
+  .setting-item label {
+    font-size: 0.9rem;
+  }
+
+  .setting-item input {
+    padding: 0.6rem;
+    font-size: 0.9rem;
+  }
+
+  .cancel-btn,
+  .save-btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .data-stats p {
+    font-size: 0.8rem;
+    margin: 0.35rem 0;
+  }
+
+  .export-btn,
+  .clear-btn {
+    font-size: 0.85rem;
+    padding: 0.6rem;
+  }
+
+  .data-management h4 {
+    font-size: 0.95rem;
   }
 }

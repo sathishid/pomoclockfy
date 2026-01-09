@@ -1,3 +1,9 @@
 pomoclockfy-backend/target/**
 .DS_Store
 node_modules
+
+# Environment files (except .env.example)
+.env
+.env.local
+.env.production.local
+.env.development.local
