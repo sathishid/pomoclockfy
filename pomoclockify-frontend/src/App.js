@@ -362,6 +362,17 @@ function App() {
     return `${minutes}m`;
   };
 
+  const formatDuration = (minutes) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 0) {
+      return `${hours}h ${mins}m`;
+    }
+    return `${mins}m`;
+  };
+
+  const getGroupDuration = (tasks) => tasks.reduce((sum, task) => sum + (task.duration || 0), 0);
+
   const handleClearAllData = async () => {
     if (window.confirm('Are you sure you want to clear all task history and reset settings? This cannot be undone.')) {
       // Clear local state
@@ -545,7 +556,9 @@ function App() {
                 <div key={group.dateKey} className="task-day-group">
                   <div className="task-day-header">
                     <h4>{group.label}</h4>
-                    <span className="task-count">{group.tasks.length} {group.tasks.length === 1 ? 'session' : 'sessions'}</span>
+                    <span className="task-count">
+                      {group.tasks.length} {group.tasks.length === 1 ? 'session' : 'sessions'} · {formatDuration(getGroupDuration(group.tasks))}
+                    </span>
                   </div>
                   {group.tasks.map((task) => (
                     <div key={task.id} className="task-item">
