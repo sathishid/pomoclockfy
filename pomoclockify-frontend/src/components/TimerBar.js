@@ -1,0 +1,101 @@
+import React from 'react';
+import './TimerBar.css';
+
+/**
+ * Horizontal Timer Bar (Clockify-style)
+ * 
+ * Features:
+ * - Task input field (editable while running)
+ * - Play/pause button
+ * - Time display (MM:SS)
+ * - Session progress dots (●●●○)
+ * - Settings icon
+ * 
+ * Props:
+ * - timeLeft: seconds remaining
+ * - isRunning: boolean
+ * - currentSession: 'work' | 'break' | 'longBreak'
+ * - currentTask: string
+ * - sessionsCompleted: number
+ * - onToggle: () => void
+ * - onTaskChange: (task: string) => void
+ * - onSettings: () => void
+ */
+const TimerBar = ({
+  timeLeft,
+  isRunning,
+  currentSession,
+  currentTask,
+  sessionsCompleted,
+  onToggle,
+  onTaskChange,
+  onSettings
+}) => {
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Render session progress dots (●●●○)
+  const renderSessionDots = () => {
+    const dots = [];
+    const sessionNumber = (sessionsCompleted % 4) + 1;
+    
+    for (let i = 1; i <= 4; i++) {
+      dots.push(
+        <span key={i} className={`session-dot ${i <= sessionNumber ? 'filled' : 'empty'}`}>
+          ●
+        </span>
+      );
+    }
+    
+    return dots;
+  };
+
+  return (
+    <div className={`timer-bar ${currentSession} ${isRunning ? 'running' : ''}`}>
+      <div className="timer-bar-container">
+        {/* Play/Pause Button */}
+        <button 
+          className={`timer-bar-play-btn ${isRunning ? 'pause' : 'play'}`}
+          onClick={onToggle}
+          title={isRunning ? 'Pause' : 'Start'}
+        >
+          {isRunning ? '⏸' : '▶'}
+        </button>
+
+        {/* Task Input */}
+        <input
+          type="text"
+          className="timer-bar-task-input"
+          placeholder="What are you working on?"
+          value={currentTask}
+          onChange={(e) => onTaskChange(e.target.value)}
+          disabled={false} // Allow editing while running (Clockify-style)
+        />
+
+        {/* Time Display */}
+        <div className="timer-bar-time">
+          {formatTime(timeLeft)}
+        </div>
+
+        {/* Session Progress Dots */}
+        <div className="timer-bar-dots">
+          {renderSessionDots()}
+        </div>
+
+        {/* Settings Button */}
+        <button 
+          className="timer-bar-settings-btn"
+          onClick={onSettings}
+          title="Settings"
+        >
+          ⚙️
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default TimerBar;
