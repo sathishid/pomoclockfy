@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './App.css';
 import Timer from './components/Timer';
+import TimerBar from './components/TimerBar';
 import Settings from './components/Settings';
 import { taskAPI, settingsAPI, checkServerHealth, syncLocalDataToServer } from './services/api';
 
@@ -20,6 +21,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const DAYS_PER_PAGE = 7;
   const [historyPage, setHistoryPage] = useState(1);
+  const [timeLeft, setTimeLeft] = useState(0); // Track current timer countdown in seconds
 
   const startOfDay = (date) => {
     const d = new Date(date);
@@ -90,9 +92,15 @@ function App() {
 
   useEffect(() => {
     // Clamp page when task history changes
-    const maxPage = Math.max(1, Math.ceil(groupTasksByDate(completedTasks).length / DAYS_PER_PAGE));
+    const grouped = completedTasks.reduce((acc, task) => {
+      const dateKey = task.endTime.toDateString();
+      if (!acc[dateKey]) acc[dateKey] = [];
+      acc[dateKey].push(task);
+      return acc;
+    }, {});
+    const maxPage = Math.max(1, Math.ceil(Object.keys(grouped).length / DAYS_PER_PAGE));
     setHistoryPage((prev) => Math.min(prev, maxPage));
-  }, [completedTasks]);
+  }, [completedTasks, DAYS_PER_PAGE]);
 
   // Load data from server or localStorage on component mount
   useEffect(() => {
@@ -221,7 +229,7 @@ function App() {
     }
   }, [workTime, breakTime, longBreakTime, sessionsCompleted, serverAvailable, isLoading]);
 
-  const getCurrentSessionTime = () => {
+  const getCurrentSessionTime = useCallback(() => {
     switch (currentSession) {
       case 'work':
         return workTime;
@@ -232,7 +240,19 @@ function App() {
       default:
         return workTime;
     }
+  }, [currentSession, workTime, breakTime, longBreakTime]);
+
+  // Callback to update timeLeft from Timer component
+  const handleTimeUpdate = (seconds) => {
+    setTimeLeft(seconds);
   };
+
+  // Initialize timeLeft when session changes
+  useEffect(() => {
+    if (!isRunning) {
+      setTimeLeft(getCurrentSessionTime() * 60);
+    }
+  }, [currentSession, workTime, breakTime, longBreakTime, isRunning, getCurrentSessionTime]);
 
   const handleSessionComplete = async () => {
     if (currentSession === 'work') {
@@ -275,12 +295,15 @@ function App() {
     setIsRunning(!isRunning);
   };
 
-  const handleSessionTypeChange = (sessionType) => {
-    if (!isRunning) {
-      setCurrentSession(sessionType);
-    }
-  };
+  // Deprecated: Session type change moved to TimerBar integration
+  // const handleSessionTypeChange = (sessionType) => {
+  //   if (!isRunning) {
+  //     setCurrentSession(sessionType);
+  //   }
+  // };
 
+  // Deprecated: Mark done functionality - handled by Timer completion
+  /* 
   const handleMarkDone = async () => {
     if (currentTask.trim() && startTime) {
       const endTime = new Date();
@@ -320,6 +343,7 @@ function App() {
       setTimerKey(prev => prev + 1); // Force timer reset
     }
   };
+  */
 
   const handleDuplicateTask = (taskName) => {
     if (!isRunning) {
@@ -436,15 +460,6 @@ function App() {
           </div>
         )}
       </header>
-
-      {/* Settings Button - Top Right Corner */}
-      <button 
-        className="settings-btn-corner"
-        onClick={() => setShowSettings(!showSettings)}
-        title="Settings"
-      >
-        ⚙️
-      </button>
       
       <main className="main-content">
         {isLoading ? (
@@ -454,92 +469,37 @@ function App() {
           </div>
         ) : (
         <div className="app-layout">
-          {/* Three Column Layout */}
-          <div className="main-timer-section">
-            {/* 1st Panel - Session Tabs & Task Input */}
-            <div className="left-panel">
-              <div className="session-tabs">
-                <button
-                  className={`session-tab ${currentSession === 'work' ? 'active' : ''}`}
-                  onClick={() => handleSessionTypeChange('work')}
-                  disabled={isRunning}
-                >
-                  Pomo
-                </button>
-                <button
-                  className={`session-tab ${currentSession === 'break' ? 'active' : ''}`}
-                  onClick={() => handleSessionTypeChange('break')}
-                  disabled={isRunning}
-                >
-                  Short Break
-                </button>
-                <button
-                  className={`session-tab ${currentSession === 'longBreak' ? 'active' : ''}`}
-                  onClick={() => handleSessionTypeChange('longBreak')}
-                  disabled={isRunning}
-                >
-                  Long Break
-                </button>
-              </div>
+          {/* TimerBar - Clockify-style horizontal timer */}
+          <TimerBar
+            timeLeft={timeLeft}
+            isRunning={isRunning}
+            currentSession={currentSession}
+            currentTask={currentTask}
+            sessionsCompleted={sessionsCompleted}
+            onToggle={handleToggleTimer}
+            onTaskChange={setCurrentTask}
+            onSettings={() => setShowSettings(true)}
+          />
 
-              <div className="task-section">
-                <input
-                  type="text"
-                  className="task-input"
-                  placeholder="What are you working on?"
-                  value={currentTask}
-                  onChange={(e) => setCurrentTask(e.target.value)}
-                  disabled={isRunning}
-                />
-              </div>
-
-              <div className="session-info">
-                <p>Sessions completed: {sessionsCompleted}</p>
-                {startTime && (
-                  <p>Started at: {startTime.toLocaleTimeString()}</p>
-                )}
-              </div>
-            </div>
-
-            {/* 2nd Panel - Timer Circle */}
-            <div className="center-panel">
-              <Timer
-                key={timerKey}
-                initialTime={getCurrentSessionTime()}
-                isRunning={isRunning}
-                onToggle={handleToggleTimer}
-                onReset={resetTimer}
-                onComplete={handleSessionComplete}
-                sessionType={currentSession}
-                currentTask={currentTask}
-                startTime={startTime}
-              />
-            </div>
-
-            {/* 3rd Panel - Control Buttons */}
-            <div className="right-panel">
-              <div className="control-buttons">
-                <button 
-                  className={`play-pause-btn ${isRunning ? 'pause' : 'play'}`}
-                  onClick={handleToggleTimer}
-                >
-                  {isRunning ? '⏸️' : '▶️'}
-                </button>
-                
-                <button className="reset-btn" onClick={resetTimer}>
-                  🔄
-                </button>
-
-                {currentTask.trim() && startTime && (
-                  <button 
-                    className="done-btn"
-                    onClick={handleMarkDone}
-                  >
-                    Done
-                  </button>
-                )}
-              </div>
-            </div>
+          {/* Hidden Timer component for background logic */}
+          <div style={{ display: 'none' }}>
+            <Timer
+              key={timerKey}
+              initialTime={getCurrentSessionTime()}
+              isRunning={isRunning}
+              onToggle={handleToggleTimer}
+              onReset={resetTimer}
+              onComplete={handleSessionComplete}
+              sessionType={currentSession}
+              currentTask={currentTask}
+              startTime={startTime}
+              onTimeUpdate={handleTimeUpdate}
+            />
+              onComplete={handleSessionComplete}
+              sessionType={currentSession}
+              currentTask={currentTask}
+              startTime={startTime}
+            />
           </div>
         {/* Task History Section with pagination (7 days per page) */}
         {completedTasks.length > 0 && (

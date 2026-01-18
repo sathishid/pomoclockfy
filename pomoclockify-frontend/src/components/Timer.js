@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './Timer.css';
 
-const Timer = ({ initialTime, isRunning, onToggle, onReset, onComplete, sessionType, currentTask, startTime }) => {
+const Timer = ({ initialTime, isRunning, onToggle, onReset, onComplete, sessionType, currentTask, startTime, onTimeUpdate }) => {
   const [timeLeft, setTimeLeft] = useState(initialTime * 60);
   const intervalRef = useRef(null);
   const endTimeRef = useRef(null); // Target timestamp when the timer should end
@@ -75,7 +75,11 @@ const Timer = ({ initialTime, isRunning, onToggle, onReset, onComplete, sessionT
   useEffect(() => {
     setTimeLeft(initialTime * 60);
     endTimeRef.current = null;
-  }, [initialTime]);
+    // Notify parent of time change
+    if (onTimeUpdate) {
+      onTimeUpdate(initialTime * 60);
+    }
+  }, [initialTime, onTimeUpdate]);
 
   useEffect(() => {
     if (!isRunning) {
@@ -94,6 +98,11 @@ const Timer = ({ initialTime, isRunning, onToggle, onReset, onComplete, sessionT
       const now = Date.now();
       const remainingSeconds = Math.max(0, Math.round((endTimeRef.current - now) / 1000));
       setTimeLeft(remainingSeconds);
+      
+      // Notify parent of time change
+      if (onTimeUpdate) {
+        onTimeUpdate(remainingSeconds);
+      }
 
       if (remainingSeconds <= 0) {
         clearInterval(intervalRef.current);
@@ -112,7 +121,7 @@ const Timer = ({ initialTime, isRunning, onToggle, onReset, onComplete, sessionT
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     };
-  }, [isRunning, playAlarmSound, onComplete]);
+  }, [isRunning, playAlarmSound, onComplete, onTimeUpdate, timeLeft]);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);

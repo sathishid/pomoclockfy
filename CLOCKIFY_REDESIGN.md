@@ -27,10 +27,10 @@ Revamp Pomoclockfy to match Clockify's clean, timesheet-focused UX while maintai
   - [X] Add drop shadow (in TimerBar.css)
   - [X] Make scrollable content below (TimerBar component is sticky)
 
-- [ ] **1.3** Update [App.js](pomoclockify-frontend/src/App.js) to use TimerBar
-  - [ ] Pass state: `isRunning`, `currentSession`, `currentTask`, `sessionsCompleted`
-  - [ ] Pass handlers: `onToggle`, `onTaskChange`, `onSettings`
-  - [ ] Remove old three-column timer layout
+- [X] **1.3** Update [App.js](pomoclockify-frontend/src/App.js) to use TimerBar
+  - [X] Pass state: `isRunning`, `currentSession`, `currentTask`, `sessionsCompleted`
+  - [X] Pass handlers: `onToggle`, `onTaskChange`, `onSettings`
+  - [X] Remove old three-column timer layout
 
 - [ ] **1.4** Update [Timer.js](pomoclockify-frontend/src/components/Timer.js)
   - [ ] Extract time display logic (reuse in TimerBar)
