@@ -97,6 +97,15 @@ feature/clockify-inspired-redesign
 
 ---
 
+## ⚠️ IMPORTANT - Checklist Update Reminder
+
+**After completing any task, update [CLOCKIFY_REDESIGN.md](CLOCKIFY_REDESIGN.md) checklist:**
+- Mark completed items with `[X]`
+- This keeps the document in sync with actual progress
+- Example: If you complete task 1.3, change `- [ ] **1.3**` to `- [X] **1.3**`
+
+---
+
 ## Useful Commands
 
 ```bash
@@ -116,6 +125,11 @@ cat CLOCKIFY_REDESIGN.md | grep -A 20 "Phase [N]:"
 # Commit your phase work:
 git add .
 git commit -m "[Phase N] Task description - item X.Y completed"
+git push origin feature-phaseN-xxx
+
+# After completing tasks, ALWAYS update checklist:
+git add CLOCKIFY_REDESIGN.md
+git commit -m "[Phase N] Update checklist - tasks X.Y completed"
 git push origin feature-phaseN-xxx
 
 # After phase is complete, merge back to main feature branch:
