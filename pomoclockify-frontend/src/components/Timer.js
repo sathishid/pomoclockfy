@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import './Timer.css';
 
 const Timer = ({ initialTime, isRunning, onToggle, onReset, onComplete, sessionType, currentTask, startTime, onTimeUpdate }) => {
@@ -123,51 +123,9 @@ const Timer = ({ initialTime, isRunning, onToggle, onReset, onComplete, sessionT
     };
   }, [isRunning, playAlarmSound, onComplete, onTimeUpdate, timeLeft]);
 
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const getProgress = () => {
-    const totalSeconds = initialTime * 60;
-    return ((totalSeconds - timeLeft) / totalSeconds) * 100;
-  };
-
-  return (
-    <div className={`timer ${sessionType}`}>
-      <div className="timer-circle">
-        <svg className="progress-ring" width="240" height="240">
-          <circle
-            className="progress-ring-background"
-            cx="120"
-            cy="120"
-            r="100"
-            fill="transparent"
-            stroke="#e6e6e6"
-            strokeWidth="6"
-          />
-          <circle
-            className="progress-ring-progress"
-            cx="120"
-            cy="120"
-            r="100"
-            fill="transparent"
-            strokeWidth="6"
-            strokeDasharray={`${2 * Math.PI * 100}`}
-            strokeDashoffset={`${2 * Math.PI * 100 * (1 - getProgress() / 100)}`}
-            transform="rotate(-90 120 120)"
-          />
-        </svg>
-        <div className="timer-display">
-          <div className="time">{formatTime(timeLeft)}</div>
-          {currentTask && (
-            <div className="current-task">{currentTask}</div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+  // Timer component now runs headless (no UI) - TimerBar displays the countdown
+  // This component only handles: timer logic, audio playback, and completion callbacks
+  return null;
 };
 
 export default Timer;

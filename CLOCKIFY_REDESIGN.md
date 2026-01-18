@@ -32,16 +32,16 @@ Revamp Pomoclockfy to match Clockify's clean, timesheet-focused UX while maintai
   - [X] Pass handlers: `onToggle`, `onTaskChange`, `onSettings`
   - [X] Remove old three-column timer layout
 
-- [ ] **1.4** Update [Timer.js](pomoclockify-frontend/src/components/Timer.js)
-  - [ ] Extract time display logic (reuse in TimerBar)
-  - [ ] Remove progress circle SVG (no longer needed)
-  - [ ] Keep audio/completion logic
+- [X] **1.4** Update [Timer.js](pomoclockify-frontend/src/components/Timer.js)
+  - [X] Extract time display logic (reuse in TimerBar)
+  - [X] Remove progress circle SVG (no longer needed)
+  - [X] Keep audio/completion logic
 
-- [ ] **1.5** Test timer bar functionality
-  - [ ] Timer counts down correctly
-  - [ ] Play/pause works
-  - [ ] Task input remains editable while running
-  - [ ] Mobile responsive
+- [X] **1.5** Test timer bar functionality
+  - [X] Timer counts down correctly
+  - [X] Play/pause works
+  - [X] Task input remains editable while running
+  - [X] Mobile responsive
 
 ---
 
