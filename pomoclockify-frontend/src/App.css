@@ -3,7 +3,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch; /* Changed from center - allows main to take full width */
   padding: 1.5rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
@@ -96,8 +96,7 @@
   flex-direction: column;
   gap: 1.25rem;
   width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
+  /* Removed max-width: 1200px to match full-width TimerBar */
   padding: 1.25rem;
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.08);
