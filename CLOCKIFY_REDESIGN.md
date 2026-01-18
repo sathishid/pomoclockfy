@@ -15,17 +15,17 @@ Revamp Pomoclockfy to match Clockify's clean, timesheet-focused UX while maintai
 
 **Branch:** `feature/clockify-inspired-redesign/phase-1-timer-bar`
 
-- [ ] **1.1** Create `TimerBar.js` component (horizontal layout)
-  - [ ] Task input field
-  - [ ] Play/pause button
-  - [ ] Time display (MM:SS)
-  - [ ] Session progress dots (●●●○)
-  - [ ] Settings icon
+- [X] **1.1** Create `TimerBar.js` component (horizontal layout)
+  - [X] Task input field
+  - [X] Play/pause button
+  - [X] Time display (MM:SS)
+  - [X] Session progress dots (●●●○)
+  - [X] Settings icon
 
-- [ ] **1.2** Update [App.css](pomoclockify-frontend/src/App.css) for sticky header
-  - [ ] Position timer bar at top
-  - [ ] Add drop shadow
-  - [ ] Make scrollable content below
+- [X] **1.2** Update [App.css](pomoclockify-frontend/src/App.css) for sticky header
+  - [X] Position timer bar at top (in TimerBar.css)
+  - [X] Add drop shadow (in TimerBar.css)
+  - [X] Make scrollable content below (TimerBar component is sticky)
 
 - [ ] **1.3** Update [App.js](pomoclockify-frontend/src/App.js) to use TimerBar
   - [ ] Pass state: `isRunning`, `currentSession`, `currentTask`, `sessionsCompleted`
