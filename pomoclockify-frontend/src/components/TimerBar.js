@@ -31,6 +31,7 @@ import TagInput from './TagInput';
  * - onProjectChange: (project: string) => void
  * - onTagsChange: (tags: array) => void
  * - onCreateProject: (project: object) => void
+ * - onDone: () => void
  */
 const TimerBar = ({
   timeLeft,
@@ -47,7 +48,8 @@ const TimerBar = ({
   onSettings,
   onProjectChange,
   onTagsChange,
-  onCreateProject
+  onCreateProject,
+  onDone
 }) => {
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -116,6 +118,17 @@ const TimerBar = ({
         <div className="timer-bar-time">
           {formatTime(timeLeft)}
         </div>
+
+        {/* Done Button - Save current task */}
+        {(isRunning || currentTask) && (
+          <button 
+            className="timer-bar-done-btn"
+            onClick={onDone}
+            title="Save task"
+          >
+            Done
+          </button>
+        )}
 
         {/* Session Progress Dots */}
         <div className="timer-bar-dots">

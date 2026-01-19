@@ -36,13 +36,18 @@ const TagInput = ({
     }
 
     const lowerInput = inputValue.toLowerCase();
-    const filtered = existingTags.filter(tag => 
+    // Ensure existingTags are strings and filter
+    const safeExistingTags = Array.isArray(existingTags) 
+      ? existingTags.filter(tag => typeof tag === 'string')
+      : [];
+    
+    const filtered = safeExistingTags.filter(tag => 
       tag.toLowerCase().includes(lowerInput) && 
       !value.includes(tag)
     );
     
     // Add option to create new tag if it doesn't exist
-    if (!existingTags.includes(inputValue) && inputValue.trim() !== '') {
+    if (!safeExistingTags.includes(inputValue) && inputValue.trim() !== '') {
       filtered.unshift(inputValue);
     }
     
@@ -64,8 +69,9 @@ const TagInput = ({
   }, []);
 
   const handleAddTag = (tag) => {
-    if (tag.trim() && !value.includes(tag)) {
-      const newTags = [...value, tag.trim()];
+    const safeValue = Array.isArray(value) ? value : [];
+    if (tag.trim() && !safeValue.includes(tag)) {
+      const newTags = [...safeValue, tag.trim()];
       onChange(newTags);
       setInputValue('');
       setSuggestions([]);
@@ -73,19 +79,20 @@ const TagInput = ({
   };
 
   const handleRemoveTag = (tagToRemove) => {
-    const newTags = value.filter(tag => tag !== tagToRemove);
+    const newTags = Array.isArray(value) ? value.filter(tag => tag !== tagToRemove) : [];
     onChange(newTags);
   };
 
   const handleKeyDown = (e) => {
+    const safeValue = Array.isArray(value) ? value : [];
     if (e.key === 'Enter') {
       e.preventDefault();
       if (inputValue.trim()) {
         handleAddTag(inputValue);
       }
-    } else if (e.key === 'Backspace' && inputValue === '' && value.length > 0) {
+    } else if (e.key === 'Backspace' && inputValue === '' && safeValue.length > 0) {
       // Remove last tag when backspace is pressed with empty input
-      const newTags = value.slice(0, -1);
+      const newTags = safeValue.slice(0, -1);
       onChange(newTags);
     }
   };
@@ -94,9 +101,9 @@ const TagInput = ({
     <div className="tag-input-container">
       <div className="tag-input-field">
         <div className="tags-display">
-          {value.map(tag => (
+          {Array.isArray(value) && value.map(tag => (
             <span key={tag} className="tag-chip">
-              {tag}
+              {String(tag)}
               <button
                 type="button"
                 className="tag-remove"
@@ -115,7 +122,7 @@ const TagInput = ({
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={() => inputValue && setShowSuggestions(true)}
-          placeholder={value.length === 0 ? placeholder : ''}
+          placeholder={(Array.isArray(value) && value.length === 0) ? placeholder : ''}
           className="tag-input"
         />
       </div>
@@ -131,10 +138,10 @@ const TagInput = ({
               {tag === inputValue ? (
                 <>
                   <span className="tag-icon">+</span>
-                  <span>Create new: <strong>{tag}</strong></span>
+                  <span>Create new: <strong>{String(tag)}</strong></span>
                 </>
               ) : (
-                tag
+                String(tag)
               )}
             </div>
           ))}

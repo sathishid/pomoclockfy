@@ -166,7 +166,7 @@ const TimeSheetView = ({
           </div>
           
           {group.tasks.map((task) => (
-            <div key={task.id} className="timesheet-row">
+            <div key={task.id} className={`timesheet-row ${editingId === task.id ? 'editing' : ''}`}>
               {editingId === task.id ? (
                 // Editing mode
                 <>
@@ -176,6 +176,7 @@ const TimeSheetView = ({
                       value={editValues.startTime}
                       onChange={(e) => setEditValues({ ...editValues, startTime: e.target.value })}
                       className="edit-input time-input"
+                      step="60"
                     />
                   </div>
                   <div className="timesheet-col time-col">
@@ -184,6 +185,7 @@ const TimeSheetView = ({
                       value={editValues.endTime}
                       onChange={(e) => setEditValues({ ...editValues, endTime: e.target.value })}
                       className="edit-input time-input"
+                      step="60"
                     />
                   </div>
                   <div className="timesheet-col duration-col">
@@ -238,11 +240,14 @@ const TimeSheetView = ({
                           title={task.project}
                         />
                       )}
+                      {task.project && (
+                        <span className="project-label">{task.project}</span>
+                      )}
                       <span className="task-name">{task.task || '(No description)'}</span>
                       {task.tags && task.tags.length > 0 && (
                         <div className="task-tags">
                           {task.tags.map((tag, idx) => (
-                            <span key={idx} className="task-tag">{tag}</span>
+                            <span key={idx} className="task-tag">{String(tag)}</span>
                           ))}
                         </div>
                       )}

@@ -111,7 +111,8 @@ function App() {
           const tasksWithDates = tasks.map(task => ({
             ...task,
             startTime: new Date(task.startTime),
-            endTime: new Date(task.endTime)
+            endTime: new Date(task.endTime),
+            tags: Array.isArray(task.tags) ? task.tags.map((tag) => String(tag)) : []
           }));
           setCompletedTasks(tasksWithDates);
           
@@ -119,7 +120,7 @@ function App() {
           const tagsSet = new Set();
           tasksWithDates.forEach(task => {
             if (task.tags && Array.isArray(task.tags)) {
-              task.tags.forEach(tag => tagsSet.add(tag));
+              task.tags.forEach(tag => tagsSet.add(String(tag)));
             }
           });
           setAllTags(Array.from(tagsSet).sort());
@@ -219,9 +220,9 @@ function App() {
   }, [currentSession, workTime, breakTime, longBreakTime]);
 
   // Callback to update timeLeft from Timer component
-  const handleTimeUpdate = (seconds) => {
+  const handleTimeUpdate = useCallback((seconds) => {
     setTimeLeft(seconds);
-  };
+  }, []);
 
   // Initialize timeLeft when session changes
   useEffect(() => {
@@ -235,6 +236,9 @@ function App() {
     if (currentTask.trim() && startTime) {
       const endTime = new Date();
       const duration = Math.round((endTime - startTime) / (1000 * 60)); // duration in minutes
+      const safeTags = Array.isArray(currentTags)
+        ? currentTags.map((tag) => String(tag))
+        : [];
       
       const completedTask = {
         id: Date.now(), // Temporary ID for optimistic update
@@ -244,7 +248,7 @@ function App() {
         endTime: endTime,
         duration: duration,
         project: currentProject,
-        tags: currentTags
+        tags: safeTags
       };
       
       // Optimistic update
@@ -312,6 +316,55 @@ function App() {
     setIsRunning(!isRunning);
   };
 
+  const handleDone = async () => {
+    if (!currentTask.trim() || !startTime) {
+      alert('Please enter a task name before saving.');
+      return;
+    }
+
+    const endTime = new Date();
+    const duration = Math.round((endTime - startTime) / (1000 * 60)); // duration in minutes
+    const safeTags = Array.isArray(currentTags)
+      ? currentTags.map((tag) => String(tag))
+      : [];
+    
+    const completedTask = {
+      id: Date.now(),
+      task: currentTask.trim(),
+      sessionType: currentSession,
+      startTime: startTime,
+      endTime: endTime,
+      duration: duration,
+      project: currentProject,
+      tags: safeTags
+    };
+    
+    // Optimistic update
+    setCompletedTasks(prev => [completedTask, ...prev]);
+    
+    // Try to save to server
+    if (serverAvailable) {
+      try {
+        const savedTask = await taskAPI.createTask(completedTask);
+        setCompletedTasks(prev => 
+          prev.map(task => 
+            task.id === completedTask.id ? savedTask : task
+          )
+        );
+      } catch (error) {
+        console.warn('Failed to save task to server:', error.message);
+      }
+    }
+
+    // Reset for next task
+    setCurrentTask('');
+    setCurrentProject(null);
+    setCurrentTags([]);
+    setIsRunning(false);
+    setStartTime(null);
+    setTimerKey(prev => prev + 1);
+  };
+
   const handleCreateProject = (projectName, color) => {
     const newProject = { name: projectName, color };
     const updatedProjects = [...projects, newProject];
@@ -320,10 +373,11 @@ function App() {
   };
 
   const handleTagsChange = (tags) => {
-    setCurrentTags(tags);
+    const safeTags = Array.isArray(tags) ? tags.map((tag) => String(tag)) : [];
+    setCurrentTags(safeTags);
     // Update all tags set
     const allTagsSet = new Set(allTags);
-    tags.forEach(tag => allTagsSet.add(tag));
+    safeTags.forEach(tag => allTagsSet.add(tag));
     setAllTags(Array.from(allTagsSet).sort());
   };
 
@@ -522,6 +576,7 @@ function App() {
             onProjectChange={setCurrentProject}
             onTagsChange={handleTagsChange}
             onCreateProject={handleCreateProject}
+            onDone={handleDone}
           />
 
           {/* Main content constrained to max-width */}
@@ -540,11 +595,6 @@ function App() {
               currentTask={currentTask}
               startTime={startTime}
               onTimeUpdate={handleTimeUpdate}
-            />
-              onComplete={handleSessionComplete}
-              sessionType={currentSession}
-              currentTask={currentTask}
-              startTime={startTime}
             />
           </div>
         

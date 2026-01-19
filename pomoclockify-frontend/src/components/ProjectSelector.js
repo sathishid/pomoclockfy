@@ -101,7 +101,7 @@ const ProjectSelector = ({
               <span>None</span>
             </div>
 
-            {projects.map(project => (
+            {Array.isArray(projects) && projects.map(project => (
               <div
                 key={project.name}
                 className={`project-item ${value === project.name ? 'selected' : ''}`}
@@ -114,7 +114,7 @@ const ProjectSelector = ({
                   className="project-item-dot"
                   style={{ backgroundColor: project.color }}
                 />
-                <span>{project.name}</span>
+                <span>{String(project.name)}</span>
               </div>
             ))}
           </div>

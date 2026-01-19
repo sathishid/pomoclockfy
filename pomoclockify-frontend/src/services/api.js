@@ -179,6 +179,13 @@ const mapTaskFromBackend = (backendTask) => {
     console.warn('Failed to parse tags:', e);
     tags = [];
   }
+
+  // Ensure tags are strings to avoid rendering errors
+  if (Array.isArray(tags)) {
+    tags = tags.map((t) => String(t));
+  } else {
+    tags = [];
+  }
   
   return {
     id: backendTask.id,

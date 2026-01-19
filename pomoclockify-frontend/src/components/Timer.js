@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './Timer.css';
 
-const Timer = ({ initialTime, isRunning, onToggle, onReset, onComplete, sessionType, currentTask, startTime }) => {
+const Timer = ({ initialTime, isRunning, onToggle, onReset, onComplete, sessionType, currentTask, startTime, onTimeUpdate }) => {
   const [timeLeft, setTimeLeft] = useState(initialTime * 60);
   const intervalRef = useRef(null);
   const endTimeRef = useRef(null); // Target timestamp when the timer should end
@@ -94,6 +94,7 @@ const Timer = ({ initialTime, isRunning, onToggle, onReset, onComplete, sessionT
       const now = Date.now();
       const remainingSeconds = Math.max(0, Math.round((endTimeRef.current - now) / 1000));
       setTimeLeft(remainingSeconds);
+      onTimeUpdate(remainingSeconds); // Notify parent of time change
 
       if (remainingSeconds <= 0) {
         clearInterval(intervalRef.current);
@@ -112,7 +113,7 @@ const Timer = ({ initialTime, isRunning, onToggle, onReset, onComplete, sessionT
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     };
-  }, [isRunning, playAlarmSound, onComplete]);
+  }, [isRunning, timeLeft, playAlarmSound, onComplete, onTimeUpdate]);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
