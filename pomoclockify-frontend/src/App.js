@@ -512,9 +512,16 @@ function App() {
             currentSession={currentSession}
             currentTask={currentTask}
             sessionsCompleted={sessionsCompleted}
+            currentProject={currentProject}
+            currentTags={currentTags}
+            projects={projects}
+            allTags={allTags}
             onToggle={handleToggleTimer}
             onTaskChange={setCurrentTask}
             onSettings={() => setShowSettings(true)}
+            onProjectChange={setCurrentProject}
+            onTagsChange={handleTagsChange}
+            onCreateProject={handleCreateProject}
           />
 
           {/* Main content constrained to max-width */}
@@ -558,6 +565,7 @@ function App() {
             isLoading={loadingMore}
             onEditTask={handleEditTask}
             onDeleteTask={handleDeleteTask}
+            projects={projects}
           />
         </div>
         </div>

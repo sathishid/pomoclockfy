@@ -1,0 +1,217 @@
+/* TimerBar.css - Clockify-inspired horizontal timer bar */
+
+.timer-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #fff;
+  border-bottom: 1px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 12px 20px;
+  transition: box-shadow 0.2s ease;
+}
+
+.timer-bar.running {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+}
+
+.timer-bar-container {
+  /* Full-width layout (Clockify-style) - no max-width constraint */
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px; /* Add horizontal padding for breathing room */
+}
+
+/* Play/Pause Button */
+.timer-bar-play-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: #4CAF50;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.timer-bar-play-btn:hover {
+  background: #45a049;
+  transform: scale(1.05);
+}
+
+.timer-bar-play-btn.pause {
+  background: #ff9800;
+}
+
+.timer-bar-play-btn.pause:hover {
+  background: #e68900;
+}
+
+.timer-bar-play-btn:active {
+  transform: scale(0.95);
+}
+
+/* Task Input */
+.timer-bar-task-input {
+  flex: 1;
+  min-width: 200px;
+  height: 48px;
+  padding: 0 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 16px;
+  outline: none;
+  transition: all 0.2s ease;
+  background: #fafafa;
+}
+
+.timer-bar-task-input:focus {
+  border-color: #4CAF50;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.timer-bar-task-input::placeholder {
+  color: #999;
+}
+
+/* Project Selector Container */
+.timer-bar-project {
+  flex-shrink: 0;
+  min-width: 150px;
+  max-width: 200px;
+}
+
+/* Tag Input Container */
+.timer-bar-tags {
+  flex-shrink: 0;
+  min-width: 180px;
+  max-width: 250px;
+}
+
+/* Time Display */
+.timer-bar-time {
+  font-size: 24px;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+  color: #333;
+  min-width: 80px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.timer-bar.work .timer-bar-time {
+  color: #4CAF50;
+}
+
+.timer-bar.break .timer-bar-time {
+  color: #2196F3;
+}
+
+.timer-bar.longBreak .timer-bar-time {
+  color: #9C27B0;
+}
+
+/* Session Progress Dots */
+.timer-bar-dots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.session-dot {
+  font-size: 16px;
+  line-height: 1;
+  transition: all 0.2s ease;
+}
+
+.session-dot.filled {
+  color: #4CAF50;
+}
+
+.session-dot.empty {
+  color: #e0e0e0;
+}
+
+/* Settings Button */
+.timer-bar-settings-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  background: white;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.timer-bar-settings-btn:hover {
+  background: #f5f5f5;
+  border-color: #ccc;
+}
+
+.timer-bar-settings-btn:active {
+  transform: scale(0.95);
+}
+
+/* Session Type Variants */
+.timer-bar.work {
+  border-bottom-color: #4CAF50;
+}
+
+.timer-bar.break {
+  border-bottom-color: #2196F3;
+}
+
+.timer-bar.longBreak {
+  border-bottom-color: #9C27B0;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .timer-bar-container {
+    gap: 12px;
+    padding: 10px 16px;
+  }
+
+  .timer-bar-play-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
+
+  .timer-bar-task-input {
+    height: 44px;
+    font-size: 14px;
+  }
+
+  .timer-bar-time {
+    font-size: 20px;
+    min-width: 70px;
+  }
+
+  .timer-bar-dots {
+    display: none; /* Hide dots on very small screens */
+  }
+
+  .timer-bar-settings-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .timer-bar-time {
+    font-size: 18px;
+    min-width: 60px;
+  }
+}
