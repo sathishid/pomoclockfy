@@ -68,7 +68,9 @@ export const taskAPI = {
       sessionType: mapSessionTypeToBackend(taskData.sessionType),
       startTime: taskData.startTime.toISOString(),
       endTime: taskData.endTime.toISOString(),
-      duration: taskData.duration
+      duration: taskData.duration,
+      project: taskData.project || null,
+      tags: taskData.tags ? JSON.stringify(taskData.tags) : null
     };
     
     const response = await api.post('/api/tasks', backendTask);
@@ -77,12 +79,18 @@ export const taskAPI = {
 
   // Update task
   updateTask: async (id, taskData) => {
+    // Fetch existing task first to merge partial updates
+    const existingTask = await api.get(`/api/tasks/${id}`);
+    const existing = existingTask.data;
+    
     const backendTask = {
-      taskName: taskData.task,
-      sessionType: mapSessionTypeToBackend(taskData.sessionType),
-      startTime: taskData.startTime.toISOString(),
-      endTime: taskData.endTime.toISOString(),
-      duration: taskData.duration
+      taskName: taskData.task !== undefined ? taskData.task : existing.taskName,
+      sessionType: taskData.sessionType !== undefined ? mapSessionTypeToBackend(taskData.sessionType) : existing.sessionType,
+      startTime: taskData.startTime !== undefined ? taskData.startTime.toISOString() : existing.startTime,
+      endTime: taskData.endTime !== undefined ? taskData.endTime.toISOString() : existing.endTime,
+      duration: taskData.duration !== undefined ? taskData.duration : existing.duration,
+      project: taskData.project !== undefined ? (taskData.project || null) : existing.project,
+      tags: taskData.tags !== undefined ? (taskData.tags ? JSON.stringify(taskData.tags) : null) : existing.tags
     };
     
     const response = await api.put(`/api/tasks/${id}`, backendTask);
@@ -164,6 +172,14 @@ const mapSessionTypeFromBackend = (sessionType) => {
 
 // Map backend task to frontend format
 const mapTaskFromBackend = (backendTask) => {
+  let tags = [];
+  try {
+    tags = backendTask.tags ? JSON.parse(backendTask.tags) : [];
+  } catch (e) {
+    console.warn('Failed to parse tags:', e);
+    tags = [];
+  }
+  
   return {
     id: backendTask.id,
     task: backendTask.taskName,
@@ -171,6 +187,8 @@ const mapTaskFromBackend = (backendTask) => {
     startTime: new Date(backendTask.startTime),
     endTime: new Date(backendTask.endTime),
     duration: backendTask.duration,
+    project: backendTask.project || null,
+    tags: tags,
     createdAt: new Date(backendTask.createdAt),
     updatedAt: new Date(backendTask.updatedAt)
   };

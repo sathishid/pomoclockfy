@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS tasks (
     start_time DATETIME NOT NULL,
     end_time DATETIME NOT NULL,
     duration INT NOT NULL,
+    project VARCHAR(255),
+    tags JSON,
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL
 );

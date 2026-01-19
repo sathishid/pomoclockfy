@@ -40,6 +40,12 @@ public class Task {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
     
+    @Column(length = 255)
+    private String project; // Project name for organization
+    
+    @Column(columnDefinition = "JSON")
+    private String tags; // JSON array of tag strings
+    
     // Constructors
     public Task() {
         this.createdAt = LocalDateTime.now();
@@ -123,5 +129,21 @@ public class Task {
     
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+    
+    public String getProject() {
+        return project;
+    }
+    
+    public void setProject(String project) {
+        this.project = project;
+    }
+    
+    public String getTags() {
+        return tags;
+    }
+    
+    public void setTags(String tags) {
+        this.tags = tags;
     }
 }

@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './App.css';
 import Timer from './components/Timer';
+import TimerBar from './components/TimerBar';
+import TimeSheetView from './components/TimeSheetView';
 import Settings from './components/Settings';
 import { taskAPI, settingsAPI, checkServerHealth, syncLocalDataToServer } from './services/api';
 
@@ -18,81 +20,44 @@ function App() {
   const [timerKey, setTimerKey] = useState(0);
   const [serverAvailable, setServerAvailable] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const DAYS_PER_PAGE = 7;
-  const [historyPage, setHistoryPage] = useState(1);
+  const [timeLeft, setTimeLeft] = useState(0); // Track current timer countdown in seconds
+  const [displayedTasks, setDisplayedTasks] = useState([]);
+  const [hasMoreTasks, setHasMoreTasks] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const TASKS_PER_LOAD = 50;
+  const [currentProject, setCurrentProject] = useState(null);
+  const [currentTags, setCurrentTags] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [allTags, setAllTags] = useState([]);
 
-  const startOfDay = (date) => {
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    return d;
-  };
-
-  const formatDateLabel = (date) => {
-    const today = new Date();
-    const yesterday = new Date();
-    yesterday.setDate(today.getDate() - 1);
-
-    if (date.toDateString() === today.toDateString()) return 'Today';
-    if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
-
-    return date.toLocaleDateString(undefined, {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
-
-  const groupTasksByDate = (tasks) => {
-    const grouped = tasks.reduce((acc, task) => {
-      const dateKey = task.endTime.toDateString();
-      if (!acc[dateKey]) acc[dateKey] = [];
-      acc[dateKey].push(task);
-      return acc;
-    }, {});
-
-    return Object.keys(grouped)
-      .sort((a, b) => new Date(b) - new Date(a))
-      .map((dateKey) => ({
-        dateKey,
-        label: formatDateLabel(new Date(dateKey)),
-        tasks: grouped[dateKey].slice().sort((a, b) => b.endTime - a.endTime)
-      }));
-  };
-
-  const groupedTasks = groupTasksByDate(completedTasks);
-
-  const getTotalPages = () => {
-    if (groupedTasks.length === 0) return 1;
-    const todayStart = startOfDay(new Date());
-    const oldestDate = startOfDay(new Date(groupedTasks[groupedTasks.length - 1].dateKey));
-    const daySpan = Math.floor((todayStart - oldestDate) / (1000 * 60 * 60 * 24)) + 1;
-    return Math.max(1, Math.ceil(daySpan / DAYS_PER_PAGE));
-  };
-
-  const totalPages = getTotalPages();
-
-  const getPageDateRange = (page) => {
-    const todayStart = startOfDay(new Date());
-    const rangeStart = new Date(todayStart);
-    rangeStart.setDate(rangeStart.getDate() - DAYS_PER_PAGE * (page - 1));
-    const rangeEnd = new Date(rangeStart);
-    rangeEnd.setDate(rangeEnd.getDate() - (DAYS_PER_PAGE - 1));
-    return { rangeStart, rangeEnd };
-  };
-
-  const { rangeStart, rangeEnd } = getPageDateRange(historyPage);
-
-  const pagedGroups = groupedTasks.filter((group) => {
-    const groupDate = startOfDay(new Date(group.dateKey));
-    return groupDate <= rangeStart && groupDate >= rangeEnd;
-  });
-
+  // Initialize displayed tasks when completedTasks changes
   useEffect(() => {
-    // Clamp page when task history changes
-    const maxPage = Math.max(1, Math.ceil(groupTasksByDate(completedTasks).length / DAYS_PER_PAGE));
-    setHistoryPage((prev) => Math.min(prev, maxPage));
-  }, [completedTasks]);
+    if (completedTasks.length > 0) {
+      const initialTasks = completedTasks.slice(0, TASKS_PER_LOAD);
+      setDisplayedTasks(initialTasks);
+      setHasMoreTasks(completedTasks.length > TASKS_PER_LOAD);
+    } else {
+      setDisplayedTasks([]);
+      setHasMoreTasks(false);
+    }
+  }, [completedTasks, TASKS_PER_LOAD]);
+
+  // Load more tasks for infinite scroll
+  const handleLoadMore = () => {
+    if (loadingMore || !hasMoreTasks) return;
+    
+    setLoadingMore(true);
+    
+    // Simulate slight delay for better UX
+    setTimeout(() => {
+      const currentLength = displayedTasks.length;
+      const moreTasks = completedTasks.slice(currentLength, currentLength + TASKS_PER_LOAD);
+      
+      setDisplayedTasks(prev => [...prev, ...moreTasks]);
+      setHasMoreTasks(currentLength + moreTasks.length < completedTasks.length);
+      setLoadingMore(false);
+    }, 300);
+  };
 
   // Load data from server or localStorage on component mount
   useEffect(() => {
@@ -137,6 +102,7 @@ function App() {
     const loadFromLocalStorage = () => {
       const savedTasks = localStorage.getItem('pomoclockfy-tasks');
       const savedSettings = localStorage.getItem('pomoclockfy-settings');
+      const savedProjects = localStorage.getItem('pomoclockfy-projects');
       
       if (savedTasks) {
         try {
@@ -148,6 +114,15 @@ function App() {
             endTime: new Date(task.endTime)
           }));
           setCompletedTasks(tasksWithDates);
+          
+          // Extract all unique tags from tasks
+          const tagsSet = new Set();
+          tasksWithDates.forEach(task => {
+            if (task.tags && Array.isArray(task.tags)) {
+              task.tags.forEach(tag => tagsSet.add(tag));
+            }
+          });
+          setAllTags(Array.from(tagsSet).sort());
         } catch (error) {
           console.error('Error loading tasks from localStorage:', error);
         }
@@ -162,6 +137,15 @@ function App() {
           setSessionsCompleted(settings.sessionsCompleted || 0);
         } catch (error) {
           console.error('Error loading settings from localStorage:', error);
+        }
+      }
+      
+      if (savedProjects) {
+        try {
+          const parsedProjects = JSON.parse(savedProjects);
+          setProjects(parsedProjects);
+        } catch (error) {
+          console.error('Error loading projects from localStorage:', error);
         }
       }
     };
@@ -221,7 +205,7 @@ function App() {
     }
   }, [workTime, breakTime, longBreakTime, sessionsCompleted, serverAvailable, isLoading]);
 
-  const getCurrentSessionTime = () => {
+  const getCurrentSessionTime = useCallback(() => {
     switch (currentSession) {
       case 'work':
         return workTime;
@@ -232,9 +216,58 @@ function App() {
       default:
         return workTime;
     }
+  }, [currentSession, workTime, breakTime, longBreakTime]);
+
+  // Callback to update timeLeft from Timer component
+  const handleTimeUpdate = (seconds) => {
+    setTimeLeft(seconds);
   };
 
+  // Initialize timeLeft when session changes
+  useEffect(() => {
+    if (!isRunning) {
+      setTimeLeft(getCurrentSessionTime() * 60);
+    }
+  }, [currentSession, workTime, breakTime, longBreakTime, isRunning, getCurrentSessionTime]);
+
   const handleSessionComplete = async () => {
+    // Create and save the completed task
+    if (currentTask.trim() && startTime) {
+      const endTime = new Date();
+      const duration = Math.round((endTime - startTime) / (1000 * 60)); // duration in minutes
+      
+      const completedTask = {
+        id: Date.now(), // Temporary ID for optimistic update
+        task: currentTask.trim(),
+        sessionType: currentSession,
+        startTime: startTime,
+        endTime: endTime,
+        duration: duration,
+        project: currentProject,
+        tags: currentTags
+      };
+      
+      // Optimistic update
+      setCompletedTasks(prev => [completedTask, ...prev]);
+      
+      // Try to save to server
+      if (serverAvailable) {
+        try {
+          const savedTask = await taskAPI.createTask(completedTask);
+          // Update with server-generated ID and data
+          setCompletedTasks(prev => 
+            prev.map(task => 
+              task.id === completedTask.id ? savedTask : task
+            )
+          );
+        } catch (error) {
+          console.warn('Failed to save task to server:', error.message);
+          // Task already added optimistically, just warn user
+        }
+      }
+    }
+    
+    // Handle session transitions
     if (currentSession === 'work') {
       const newSessionsCompleted = sessionsCompleted + 1;
       setSessionsCompleted(newSessionsCompleted);
@@ -258,6 +291,10 @@ function App() {
       setCurrentSession('work');
     }
     setIsRunning(false);
+    
+    // Reset task and tags after saving
+    setCurrentTask('');
+    setCurrentTags([]);
   };
 
   const resetTimer = () => {
@@ -275,12 +312,30 @@ function App() {
     setIsRunning(!isRunning);
   };
 
-  const handleSessionTypeChange = (sessionType) => {
-    if (!isRunning) {
-      setCurrentSession(sessionType);
-    }
+  const handleCreateProject = (projectName, color) => {
+    const newProject = { name: projectName, color };
+    const updatedProjects = [...projects, newProject];
+    setProjects(updatedProjects);
+    localStorage.setItem('pomoclockfy-projects', JSON.stringify(updatedProjects));
   };
 
+  const handleTagsChange = (tags) => {
+    setCurrentTags(tags);
+    // Update all tags set
+    const allTagsSet = new Set(allTags);
+    tags.forEach(tag => allTagsSet.add(tag));
+    setAllTags(Array.from(allTagsSet).sort());
+  };
+
+  // Deprecated: Session type change moved to TimerBar integration
+  // const handleSessionTypeChange = (sessionType) => {
+  //   if (!isRunning) {
+  //     setCurrentSession(sessionType);
+  //   }
+  // };
+
+  // Deprecated: Mark done functionality - handled by Timer completion
+  /* 
   const handleMarkDone = async () => {
     if (currentTask.trim() && startTime) {
       const endTime = new Date();
@@ -320,12 +375,7 @@ function App() {
       setTimerKey(prev => prev + 1); // Force timer reset
     }
   };
-
-  const handleDuplicateTask = (taskName) => {
-    if (!isRunning) {
-      setCurrentTask(taskName);
-    }
-  };
+  */
 
   const handleDeleteTask = async (taskId) => {
     if (window.confirm('Are you sure you want to delete this task from history?')) {
@@ -347,6 +397,27 @@ function App() {
     }
   };
 
+  const handleEditTask = async (taskId, updates) => {
+    // Optimistic update
+    const originalTasks = completedTasks;
+    setCompletedTasks(prev => 
+      prev.map(task => 
+        task.id === taskId ? { ...task, ...updates } : task
+      ).sort((a, b) => b.endTime - a.endTime)
+    );
+    
+    // Try to update on server
+    if (serverAvailable) {
+      try {
+        await taskAPI.updateTask(taskId, updates);
+      } catch (error) {
+        console.warn('Failed to update task on server:', error.message);
+        // Revert on error
+        setCompletedTasks(originalTasks);
+      }
+    }
+  };
+
   const getTodayTimeSpent = () => {
     const today = new Date().toDateString();
     const todayTasks = completedTasks.filter(task => 
@@ -361,17 +432,6 @@ function App() {
     }
     return `${minutes}m`;
   };
-
-  const formatDuration = (minutes) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    if (hours > 0) {
-      return `${hours}h ${mins}m`;
-    }
-    return `${mins}m`;
-  };
-
-  const getGroupDuration = (tasks) => tasks.reduce((sum, task) => sum + (task.duration || 0), 0);
 
   const handleClearAllData = async () => {
     if (window.confirm('Are you sure you want to clear all task history and reset settings? This cannot be undone.')) {
@@ -436,15 +496,6 @@ function App() {
           </div>
         )}
       </header>
-
-      {/* Settings Button - Top Right Corner */}
-      <button 
-        className="settings-btn-corner"
-        onClick={() => setShowSettings(!showSettings)}
-        title="Settings"
-      >
-        ⚙️
-      </button>
       
       <main className="main-content">
         {isLoading ? (
@@ -453,183 +504,65 @@ function App() {
             <p>Loading your data...</p>
           </div>
         ) : (
-        <div className="app-layout">
-          {/* Three Column Layout */}
-          <div className="main-timer-section">
-            {/* 1st Panel - Session Tabs & Task Input */}
-            <div className="left-panel">
-              <div className="session-tabs">
-                <button
-                  className={`session-tab ${currentSession === 'work' ? 'active' : ''}`}
-                  onClick={() => handleSessionTypeChange('work')}
-                  disabled={isRunning}
-                >
-                  Pomo
-                </button>
-                <button
-                  className={`session-tab ${currentSession === 'break' ? 'active' : ''}`}
-                  onClick={() => handleSessionTypeChange('break')}
-                  disabled={isRunning}
-                >
-                  Short Break
-                </button>
-                <button
-                  className={`session-tab ${currentSession === 'longBreak' ? 'active' : ''}`}
-                  onClick={() => handleSessionTypeChange('longBreak')}
-                  disabled={isRunning}
-                >
-                  Long Break
-                </button>
-              </div>
+        <>
+          {/* TimerBar - Renders at full width (outside app-layout) */}
+          <TimerBar
+            timeLeft={timeLeft}
+            isRunning={isRunning}
+            currentSession={currentSession}
+            currentTask={currentTask}
+            sessionsCompleted={sessionsCompleted}
+            onToggle={handleToggleTimer}
+            onTaskChange={setCurrentTask}
+            onSettings={() => setShowSettings(true)}
+          />
 
-              <div className="task-section">
-                <input
-                  type="text"
-                  className="task-input"
-                  placeholder="What are you working on?"
-                  value={currentTask}
-                  onChange={(e) => setCurrentTask(e.target.value)}
-                  disabled={isRunning}
-                />
-              </div>
+          {/* Main content constrained to max-width */}
+          <div className="app-layout">
 
-              <div className="session-info">
-                <p>Sessions completed: {sessionsCompleted}</p>
-                {startTime && (
-                  <p>Started at: {startTime.toLocaleTimeString()}</p>
-                )}
-              </div>
-            </div>
-
-            {/* 2nd Panel - Timer Circle */}
-            <div className="center-panel">
-              <Timer
-                key={timerKey}
-                initialTime={getCurrentSessionTime()}
-                isRunning={isRunning}
-                onToggle={handleToggleTimer}
-                onReset={resetTimer}
-                onComplete={handleSessionComplete}
-                sessionType={currentSession}
-                currentTask={currentTask}
-                startTime={startTime}
-              />
-            </div>
-
-            {/* 3rd Panel - Control Buttons */}
-            <div className="right-panel">
-              <div className="control-buttons">
-                <button 
-                  className={`play-pause-btn ${isRunning ? 'pause' : 'play'}`}
-                  onClick={handleToggleTimer}
-                >
-                  {isRunning ? '⏸️' : '▶️'}
-                </button>
-                
-                <button className="reset-btn" onClick={resetTimer}>
-                  🔄
-                </button>
-
-                {currentTask.trim() && startTime && (
-                  <button 
-                    className="done-btn"
-                    onClick={handleMarkDone}
-                  >
-                    Done
-                  </button>
-                )}
-              </div>
-            </div>
+          {/* Hidden Timer component for background logic */}
+          <div style={{ display: 'none' }}>
+            <Timer
+              key={timerKey}
+              initialTime={getCurrentSessionTime()}
+              isRunning={isRunning}
+              onToggle={handleToggleTimer}
+              onReset={resetTimer}
+              onComplete={handleSessionComplete}
+              sessionType={currentSession}
+              currentTask={currentTask}
+              startTime={startTime}
+              onTimeUpdate={handleTimeUpdate}
+            />
+              onComplete={handleSessionComplete}
+              sessionType={currentSession}
+              currentTask={currentTask}
+              startTime={startTime}
+            />
           </div>
-        {/* Task History Section with pagination (7 days per page) */}
-        {completedTasks.length > 0 && (
-          <div className="task-history">
-            <div className="history-header">
-              <h3>Completed Tasks</h3>
+        
+        {/* Task History Section with infinite scroll */}
+        <div className="task-history">
+          <div className="history-header">
+            <h3>Task History</h3>
+            {completedTasks.length > 0 && (
               <div className="history-subtext">
-                Showing {rangeEnd.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                {' '}to {rangeStart.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                {completedTasks.length} total {completedTasks.length === 1 ? 'entry' : 'entries'}
               </div>
-            </div>
-            <div className="task-list">
-              {pagedGroups.map((group) => (
-                <div key={group.dateKey} className="task-day-group">
-                  <div className="task-day-header">
-                    <h4>{group.label}</h4>
-                    <span className="task-count">
-                      {group.tasks.length} {group.tasks.length === 1 ? 'session' : 'sessions'} · {formatDuration(getGroupDuration(group.tasks))}
-                    </span>
-                  </div>
-                  {group.tasks.map((task) => (
-                    <div key={task.id} className="task-item">
-                      <div className="task-info">
-                        <div className="task-name">{task.task}</div>
-                        <div className="task-type">
-                          {task.sessionType === 'work' ? 'Pomo' : 
-                           task.sessionType === 'break' ? 'Short Break' : 'Long Break'}
-                        </div>
-                      </div>
-                      <div className="task-times">
-                        <div className="start-time">{task.startTime.toLocaleTimeString()}</div>
-                        <div className="end-time">{task.endTime.toLocaleTimeString()}</div>
-                        <div className="duration">{task.duration} min</div>
-                      </div>
-                      <div className="task-actions">
-                        <button 
-                          className="duplicate-btn"
-                          onClick={() => handleDuplicateTask(task.task)}
-                          disabled={isRunning}
-                          title="Start new session with this task"
-                        >
-                          🔄 Start New
-                        </button>
-                        <button 
-                          className="delete-btn"
-                          onClick={() => handleDeleteTask(task.id)}
-                          title="Delete this task from history"
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ))}
-              <div className="history-pagination">
-                <button
-                  className="history-page-btn"
-                  onClick={() => setHistoryPage(1)}
-                  disabled={historyPage === 1}
-                >
-                  ⏮︎ First
-                </button>
-                <button
-                  className="history-page-btn"
-                  onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
-                  disabled={historyPage === 1}
-                >
-                  ◀︎ Prev
-                </button>
-                <span className="page-indicator">Page {historyPage} of {totalPages}</span>
-                <button
-                  className="history-page-btn"
-                  onClick={() => setHistoryPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={historyPage === totalPages}
-                >
-                  Next ▶︎
-                </button>
-                <button
-                  className="history-page-btn"
-                  onClick={() => setHistoryPage(totalPages)}
-                  disabled={historyPage === totalPages}
-                >
-                  Last ⏭︎
-                </button>
-              </div>
-            </div>
+            )}
           </div>
-        )}
+          <TimeSheetView 
+            tasks={displayedTasks}
+            onLoadMore={handleLoadMore}
+            hasMore={hasMoreTasks}
+            isLoading={loadingMore}
+            onEditTask={handleEditTask}
+            onDeleteTask={handleDeleteTask}
+          />
         </div>
+        </div>
+        </>
+        )}
         )}
 
         {showSettings && (
