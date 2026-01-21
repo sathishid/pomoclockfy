@@ -4,6 +4,7 @@ import Timer from './components/Timer';
 import TimerBar from './components/TimerBar';
 import TimeSheetView from './components/TimeSheetView';
 import Settings from './components/Settings';
+import AnalyticsView from './components/AnalyticsView';
 import { taskAPI, settingsAPI, checkServerHealth, syncLocalDataToServer } from './services/api';
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
   const [currentTags, setCurrentTags] = useState([]);
   const [projects, setProjects] = useState([]);
   const [allTags, setAllTags] = useState([]);
+  const [viewMode, setViewMode] = useState('history'); // 'history' or 'analytics'
 
   // Initialize displayed tasks when completedTasks changes
   useEffect(() => {
@@ -598,25 +600,44 @@ function App() {
             />
           </div>
         
-        {/* Task History Section with infinite scroll */}
-        <div className="task-history">
-          <div className="history-header">
-            <h3>Task History</h3>
-            {completedTasks.length > 0 && (
-              <div className="history-subtext">
-                {completedTasks.length} total {completedTasks.length === 1 ? 'entry' : 'entries'}
+        {/* Task History & Analytics Section */}
+        {completedTasks.length > 0 && (
+          <div className="task-history">
+            <div className="history-header">
+              <h3>Task History</h3>
+              <div className="view-mode-tabs">
+                <button
+                  className={`view-tab ${viewMode === 'history' ? 'active' : ''}`}
+                  onClick={() => setViewMode('history')}
+                >
+                  History
+                </button>
+                <button
+                  className={`view-tab ${viewMode === 'analytics' ? 'active' : ''}`}
+                  onClick={() => setViewMode('analytics')}
+                >
+                  Analytics
+                </button>
               </div>
+              {completedTasks.length > 0 && viewMode === 'history' && (
+                <div className="history-subtext">
+                  {completedTasks.length} total {completedTasks.length === 1 ? 'entry' : 'entries'}
+                </div>
+              )}
+            </div>
+            {viewMode === 'history' ? (
+              <TimeSheetView 
+                tasks={displayedTasks}
+                onLoadMore={handleLoadMore}
+                hasMore={hasMoreTasks}
+                isLoading={loadingMore}
+                onEditTask={handleEditTask}
+                onDeleteTask={handleDeleteTask}
+                projects={projects}
+              />
+            ) : (
+              <AnalyticsView tasks={completedTasks} />
             )}
-          </div>
-          <TimeSheetView 
-            tasks={displayedTasks}
-            onLoadMore={handleLoadMore}
-            hasMore={hasMoreTasks}
-            isLoading={loadingMore}
-            onEditTask={handleEditTask}
-            onDeleteTask={handleDeleteTask}
-            projects={projects}
-          />
         </div>
         </div>
         </>
