@@ -331,6 +331,32 @@
   gap: 1rem;
 }
 
+.view-mode-tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.view-tab {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: #000;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.view-tab:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.view-tab.active {
+  background: white;
+  color: #667eea;
+}
+
 .history-subtext {
   color: #000000;
   font-size: 0.9rem;

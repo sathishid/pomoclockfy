@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import Timer from './components/Timer';
 import Settings from './components/Settings';
+import AnalyticsView from './components/AnalyticsView';
 import { taskAPI, settingsAPI, checkServerHealth, syncLocalDataToServer } from './services/api';
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
   const [timerKey, setTimerKey] = useState(0);
   const [serverAvailable, setServerAvailable] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [viewMode, setViewMode] = useState('history'); // 'history' or 'analytics'
   const DAYS_PER_PAGE = 7;
   const [historyPage, setHistoryPage] = useState(1);
 
@@ -541,24 +543,40 @@ function App() {
               </div>
             </div>
           </div>
-        {/* Task History Section with pagination (7 days per page) */}
+        {/* Task History & Analytics Section */}
         {completedTasks.length > 0 && (
           <div className="task-history">
             <div className="history-header">
               <h3>Completed Tasks</h3>
-              <div className="history-subtext">
-                Showing {rangeEnd.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                {' '}to {rangeStart.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+              <div className="view-mode-tabs">
+                <button
+                  className={`view-tab ${viewMode === 'history' ? 'active' : ''}`}
+                  onClick={() => setViewMode('history')}
+                >
+                  History
+                </button>
+                <button
+                  className={`view-tab ${viewMode === 'analytics' ? 'active' : ''}`}
+                  onClick={() => setViewMode('analytics')}
+                >
+                  Analytics
+                </button>
               </div>
             </div>
-            <div className="task-list">
-              {pagedGroups.map((group) => (
-                <div key={group.dateKey} className="task-day-group">
-                  <div className="task-day-header">
-                    <h4>{group.label}</h4>
-                    <span className="task-count">
-                      {group.tasks.length} {group.tasks.length === 1 ? 'session' : 'sessions'} · {formatDuration(getGroupDuration(group.tasks))}
-                    </span>
+            {viewMode === 'history' ? (
+              <div className="history-content">
+                <div className="history-subtext">
+                  Showing {rangeEnd.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                  {' '}to {rangeStart.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                </div>
+                <div className="task-list">
+                  {pagedGroups.map((group) => (
+                    <div key={group.dateKey} className="task-day-group">
+                      <div className="task-day-header">
+                        <h4>{group.label}</h4>
+                        <span className="task-count">
+                          {group.tasks.length} {group.tasks.length === 1 ? 'session' : 'sessions'} · {formatDuration(getGroupDuration(group.tasks))}
+                        </span>
                   </div>
                   {group.tasks.map((task) => (
                     <div key={task.id} className="task-item">
@@ -595,38 +613,42 @@ function App() {
                   ))}
                 </div>
               ))}
-              <div className="history-pagination">
-                <button
-                  className="history-page-btn"
-                  onClick={() => setHistoryPage(1)}
-                  disabled={historyPage === 1}
-                >
-                  ⏮︎ First
-                </button>
-                <button
-                  className="history-page-btn"
-                  onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
-                  disabled={historyPage === 1}
-                >
-                  ◀︎ Prev
-                </button>
-                <span className="page-indicator">Page {historyPage} of {totalPages}</span>
-                <button
-                  className="history-page-btn"
-                  onClick={() => setHistoryPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={historyPage === totalPages}
-                >
-                  Next ▶︎
-                </button>
-                <button
-                  className="history-page-btn"
-                  onClick={() => setHistoryPage(totalPages)}
-                  disabled={historyPage === totalPages}
-                >
-                  Last ⏭︎
-                </button>
+                  <div className="history-pagination">
+                    <button
+                      className="history-page-btn"
+                      onClick={() => setHistoryPage(1)}
+                      disabled={historyPage === 1}
+                    >
+                      ⏮︎ First
+                    </button>
+                    <button
+                      className="history-page-btn"
+                      onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
+                      disabled={historyPage === 1}
+                    >
+                      ◀︎ Prev
+                    </button>
+                    <span className="page-indicator">Page {historyPage} of {totalPages}</span>
+                    <button
+                      className="history-page-btn"
+                      onClick={() => setHistoryPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={historyPage === totalPages}
+                    >
+                      Next ▶︎
+                    </button>
+                    <button
+                      className="history-page-btn"
+                      onClick={() => setHistoryPage(totalPages)}
+                      disabled={historyPage === totalPages}
+                    >
+                      Last ⏭︎
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : (
+              <AnalyticsView tasks={completedTasks} />
+            )}
           </div>
         )}
         </div>
