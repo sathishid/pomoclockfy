@@ -1,13 +1,17 @@
 .App {
+  --shell-padding: 1.5rem;
+  --content-max: 1200px;
   text-align: center;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1.5rem;
+  padding: var(--shell-padding);
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   transition: background 0.5s ease;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Session-specific backgrounds */
@@ -25,13 +29,14 @@
 
 .App-header {
   width: 100%;
-  max-width: 1200px;
-  padding: 1.25rem 1.5rem 0.75rem;
+  max-width: none;
+  padding: 1.25rem var(--shell-padding) 0.75rem;
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
   align-items: flex-start;
+  box-sizing: border-box;
 }
 
 .App-header h1 {
@@ -40,6 +45,16 @@
   font-weight: 700;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
   text-align: left;
+}
+
+.main-content {
+  width: calc(100% - 2 * var(--shell-padding));
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .subtitle {
@@ -87,7 +102,7 @@
   padding: 1.5rem;
   gap: 1rem;
   width: 100%;
-  max-width: 1200px;
+  max-width: none;
 }
 
 /* Desktop Layout - Three Column */
@@ -95,10 +110,11 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  width: 100%;
-  max-width: 1200px;
+  width: calc(100% - 2 * var(--shell-padding));
+  max-width: 100%;
   margin: 0 auto;
   padding: 1.25rem;
+  box-sizing: border-box;
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.08);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
@@ -312,7 +328,7 @@
 /* Task History */
 .task-history {
   width: 100%;
-  max-width: 1200px;
+  max-width: none;
   margin: 1.5rem auto 0;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 18px;

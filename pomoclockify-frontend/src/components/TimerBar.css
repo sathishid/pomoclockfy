@@ -1,13 +1,15 @@
 /* TimerBar.css - Clockify-inspired horizontal timer bar */
 
 .timer-bar {
+  width: 100%;
+  box-sizing: border-box;
   position: sticky;
   top: 0;
   z-index: 100;
   background: #fff;
   border-bottom: 1px solid #e0e0e0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  padding: 12px 20px;
+  padding: 12px 0;
   transition: box-shadow 0.2s ease;
 }
 
@@ -16,11 +18,15 @@
 }
 
 .timer-bar-container {
-  /* Full-width layout (Clockify-style) - no max-width constraint */
+  /* Match app-layout width: viewport minus shell padding, centered */
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 0 20px; /* Add horizontal padding for breathing room */
+  width: calc(100% - 2 * var(--shell-padding, 20px));
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 var(--shell-padding, 20px);
+  box-sizing: border-box;
 }
 
 /* Play/Pause Button */

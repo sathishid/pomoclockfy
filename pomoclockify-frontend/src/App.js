@@ -638,10 +638,10 @@ function App() {
             ) : (
               <AnalyticsView tasks={completedTasks} />
             )}
-        </div>
+          </div>
+        )}
         </div>
         </>
-        )}
         )}
 
         {showSettings && (
