@@ -221,6 +221,32 @@ function App() {
     }
   }, [currentSession, workTime, breakTime, longBreakTime]);
 
+  // Validate that new task doesn't overlap with existing tasks
+  const validateTaskOverlap = (newTask) => {
+    if (!newTask.startTime || !newTask.endTime) {
+      return { valid: true, message: '' };
+    }
+
+    const newStart = new Date(newTask.startTime).getTime();
+    const newEnd = new Date(newTask.endTime).getTime();
+
+    for (const existingTask of completedTasks) {
+      const existingStart = new Date(existingTask.startTime).getTime();
+      const existingEnd = new Date(existingTask.endTime).getTime();
+
+      // Check if new task overlaps with existing task
+      // Overlap occurs if: new task starts before existing task ends AND new task ends after existing task starts
+      if (newStart < existingEnd && newEnd > existingStart) {
+        return {
+          valid: false,
+          message: `This task overlaps with existing task "${existingTask.task}" (${new Date(existingTask.startTime).toLocaleTimeString()} - ${new Date(existingTask.endTime).toLocaleTimeString()})`
+        };
+      }
+    }
+
+    return { valid: true, message: '' };
+  };
+
   // Callback to update timeLeft from Timer component
   const handleTimeUpdate = useCallback((seconds) => {
     setTimeLeft(seconds);
@@ -252,6 +278,13 @@ function App() {
         project: currentProject,
         tags: safeTags
       };
+      
+      // Validate for overlaps
+      const validation = validateTaskOverlap(completedTask);
+      if (!validation.valid) {
+        alert(`Cannot save task: ${validation.message}`);
+        return;
+      }
       
       // Optimistic update
       setCompletedTasks(prev => [completedTask, ...prev]);
@@ -298,9 +331,10 @@ function App() {
     }
     setIsRunning(false);
     
-    // Reset task and tags after saving
+    // Reset task, tags, and startTime after saving
     setCurrentTask('');
     setCurrentTags([]);
+    setStartTime(null);
   };
 
   const resetTimer = () => {
@@ -340,6 +374,13 @@ function App() {
       project: currentProject,
       tags: safeTags
     };
+    
+    // Validate for overlaps
+    const validation = validateTaskOverlap(completedTask);
+    if (!validation.valid) {
+      alert(`Cannot save task: ${validation.message}`);
+      return;
+    }
     
     // Optimistic update
     setCompletedTasks(prev => [completedTask, ...prev]);
