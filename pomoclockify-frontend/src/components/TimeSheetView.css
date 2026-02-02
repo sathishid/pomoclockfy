@@ -9,7 +9,7 @@
 
 .timesheet-header {
   display: grid;
-  grid-template-columns: 100px 100px 100px 1fr 120px 100px;
+  grid-template-columns: 100px 100px 100px 1fr 120px 140px;
   gap: 12px;
   padding: 12px 16px;
   background: #f5f5f5;
@@ -93,7 +93,7 @@
 /* Timesheet Row Styles */
 .timesheet-row {
   display: grid;
-  grid-template-columns: 100px 100px 100px 1fr 120px 100px;
+  grid-template-columns: 100px 100px 100px 1fr 120px 140px;
   gap: 12px;
   padding: 12px 16px;
   border-bottom: 1px solid #f5f5f5;
@@ -103,7 +103,7 @@
 
 /* Widen columns while editing to fit datetime controls */
 .timesheet-row.editing {
-  grid-template-columns: 180px 180px 80px 1fr 120px 100px;
+  grid-template-columns: 180px 180px 80px 1fr 120px 140px;
 }
 
 .timesheet-row:hover {
@@ -201,6 +201,12 @@
   background: #e3f2fd;
   border-color: #2196F3;
   color: #2196F3;
+}
+
+.reuse-btn:hover {
+  background: #e8f5e9;
+  border-color: #4CAF50;
+  color: #4CAF50;
 }
 
 .delete-btn:hover {

@@ -8,6 +8,7 @@ const TimeSheetView = ({
   isLoading,
   onEditTask,
   onDeleteTask,
+  onReuseTask,
   projects 
 }) => {
   const [editingId, setEditingId] = useState(null);
@@ -262,6 +263,13 @@ const TimeSheetView = ({
                     </span>
                   </div>
                   <div className="timesheet-col actions-col">
+                    <button 
+                      className="action-btn reuse-btn"
+                      onClick={() => onReuseTask(task.id)}
+                      title="Reuse this task"
+                    >
+                      ⟲
+                    </button>
                     <button 
                       className="action-btn edit-btn"
                       onClick={() => handleEditStart(task)}

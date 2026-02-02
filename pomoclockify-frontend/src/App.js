@@ -494,6 +494,24 @@ function App() {
     }
   };
 
+  const handleReuseTask = (taskId) => {
+    // Find the task to reuse
+    const taskToReuse = completedTasks.find(task => task.id === taskId);
+    if (taskToReuse) {
+      // Populate task input, project, and tags from the completed task
+      setCurrentTask(taskToReuse.task);
+      setCurrentProject(taskToReuse.project || null);
+      setCurrentTags(Array.isArray(taskToReuse.tags) ? taskToReuse.tags.map(tag => String(tag)) : []);
+      
+      // Update all tags set
+      const allTagsSet = new Set(allTags);
+      if (Array.isArray(taskToReuse.tags)) {
+        taskToReuse.tags.forEach(tag => allTagsSet.add(String(tag)));
+      }
+      setAllTags(Array.from(allTagsSet).sort());
+    }
+  };
+
   const handleEditTask = async (taskId, updates) => {
     // Optimistic update
     const originalTasks = completedTasks;
@@ -674,6 +692,7 @@ function App() {
                 isLoading={loadingMore}
                 onEditTask={handleEditTask}
                 onDeleteTask={handleDeleteTask}
+                onReuseTask={handleReuseTask}
                 projects={projects}
               />
             ) : (
