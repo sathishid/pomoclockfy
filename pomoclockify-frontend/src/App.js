@@ -31,6 +31,7 @@ function App() {
   const [projects, setProjects] = useState([]);
   const [allTags, setAllTags] = useState([]);
   const [viewMode, setViewMode] = useState('history'); // 'history' or 'analytics'
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Initialize displayed tasks when completedTasks changes
   useEffect(() => {
@@ -250,6 +251,57 @@ function App() {
   // Callback to update timeLeft from Timer component
   const handleTimeUpdate = useCallback((seconds) => {
     setTimeLeft(seconds);
+  }, []);
+
+  const handleFullscreen = () => {
+    const appElement = document.querySelector('.App');
+    if (!isFullscreen) {
+      // Enter fullscreen
+      if (appElement.requestFullscreen) {
+        appElement.requestFullscreen();
+      } else if (appElement.webkitRequestFullscreen) {
+        appElement.webkitRequestFullscreen();
+      } else if (appElement.mozRequestFullScreen) {
+        appElement.mozRequestFullScreen();
+      } else if (appElement.msRequestFullscreen) {
+        appElement.msRequestFullscreen();
+      }
+      setIsFullscreen(true);
+    } else {
+      // Exit fullscreen
+      if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+        }
+      }
+      setIsFullscreen(false);
+    }
+  };
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const isCurrentlyFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+      setIsFullscreen(isCurrentlyFullscreen);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('msfullscreenchange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('msfullscreenchange', handleFullscreenChange);
+    };
   }, []);
 
   // Initialize timeLeft when session changes
@@ -610,6 +662,13 @@ function App() {
             </span>
           </div>
         )}
+        <button 
+          className="fullscreen-btn"
+          onClick={handleFullscreen}
+          title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+        >
+          {isFullscreen ? '⛶' : '⛶'}
+        </button>
       </header>
       
       <main className="main-content">
