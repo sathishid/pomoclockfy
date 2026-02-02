@@ -32,6 +32,9 @@ function App() {
   const [allTags, setAllTags] = useState([]);
   const [viewMode, setViewMode] = useState('history'); // 'history' or 'analytics'
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showBreakPrompt, setShowBreakPrompt] = useState(false);
+  const [nextSessionType, setNextSessionType] = useState(null);
+  const [lastCompletedTaskDetails, setLastCompletedTaskDetails] = useState(null);
 
   // Initialize displayed tasks when completedTasks changes
   useEffect(() => {
@@ -331,6 +334,13 @@ function App() {
         tags: safeTags
       };
       
+      // Store task details for potential "Continue Working" action
+      setLastCompletedTaskDetails({
+        task: completedTask.task,
+        project: completedTask.project,
+        tags: completedTask.tags
+      });
+      
       // Validate for overlaps
       const validation = validateTaskOverlap(completedTask);
       if (!validation.valid) {
@@ -372,13 +382,19 @@ function App() {
         }
       }
       
-      // Every 4 work sessions, take a long break
+      // Determine next session type
+      let nextSession;
       if (newSessionsCompleted % 4 === 0) {
-        setCurrentSession('longBreak');
+        nextSession = 'longBreak';
       } else {
-        setCurrentSession('break');
+        nextSession = 'break';
       }
+      
+      // Show break prompt instead of auto-transitioning
+      setNextSessionType(nextSession);
+      setShowBreakPrompt(true);
     } else {
+      // Transitioning from break back to work
       setCurrentSession('work');
     }
     setIsRunning(false);
@@ -405,8 +421,12 @@ function App() {
   };
 
   const handleDone = async () => {
-    if (!currentTask.trim() || !startTime) {
+    if (!currentTask.trim()) {
       alert('Please enter a task name before saving.');
+      return;
+    }
+    if (!startTime) {
+      alert('Please start the timer before saving.');
       return;
     }
 
@@ -544,6 +564,31 @@ function App() {
         }
       }
     }
+  };
+
+  const handleTakeBreak = () => {
+    // Accept the break - transition to the next session
+    setCurrentSession(nextSessionType);
+    setShowBreakPrompt(false);
+    setNextSessionType(null);
+    setLastCompletedTaskDetails(null);
+  };
+
+  const handleSkipBreak = () => {
+    // Skip the break - continue working on the same task
+    if (lastCompletedTaskDetails) {
+      setCurrentTask(lastCompletedTaskDetails.task);
+      setCurrentProject(lastCompletedTaskDetails.project || null);
+      setCurrentTags(Array.isArray(lastCompletedTaskDetails.tags) ? lastCompletedTaskDetails.tags : []);
+    }
+    setCurrentSession('work');
+    setTimerKey(prev => prev + 1); // Force Timer component to reinitialize
+    setTimeLeft(getCurrentSessionTime() * 60);
+    setStartTime(new Date());
+    setIsRunning(true);
+    setShowBreakPrompt(false);
+    setNextSessionType(null);
+    setLastCompletedTaskDetails(null);
   };
 
   const handleReuseTask = (taskId) => {
@@ -777,6 +822,30 @@ function App() {
             totalTasks={completedTasks.length}
             todayTimeSpent={getTodayTimeSpent()}
           />
+        )}
+
+        {/* Break Prompt Dialog */}
+        {showBreakPrompt && (
+          <div className="modal-overlay">
+            <div className="break-prompt-modal">
+              <h2>Time for a break! 🎉</h2>
+              <p>You've completed a work session. Would you like to take a break or continue working?</p>
+              <div className="break-prompt-buttons">
+                <button 
+                  className="btn-take-break"
+                  onClick={handleTakeBreak}
+                >
+                  {nextSessionType === 'longBreak' ? '☕ Take Long Break' : '💧 Take Break'}
+                </button>
+                <button 
+                  className="btn-skip-break"
+                  onClick={handleSkipBreak}
+                >
+                  💪 Continue Working
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </main>
     </div>
