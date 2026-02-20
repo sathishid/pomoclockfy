@@ -63,6 +63,30 @@
   transform: scale(0.95);
 }
 
+/* Session Type Selector */
+.timer-bar-session-select {
+  height: 48px;
+  padding: 0 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.timer-bar-session-select:hover {
+  border-color: #ccc;
+}
+
+.timer-bar-session-select:focus {
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
 /* Done Button */
 .timer-bar-done-btn {
   height: 48px;

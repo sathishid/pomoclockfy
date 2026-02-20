@@ -420,6 +420,14 @@ function App() {
     setIsRunning(!isRunning);
   };
 
+  const handleSessionChange = (newSession) => {
+    setCurrentSession(newSession);
+    setIsRunning(false); // Stop timer when changing session
+    setStartTime(null);
+    setTimeLeft(getCurrentSessionTime() * 60); // Update timeLeft to new session duration
+    setTimerKey(prev => prev + 1); // Reset timer to new duration
+  };
+
   const handleDone = async () => {
     if (!currentTask.trim()) {
       alert('Please enter a task name before saving.');
@@ -742,6 +750,7 @@ function App() {
             onTagsChange={handleTagsChange}
             onCreateProject={handleCreateProject}
             onDone={handleDone}
+            onSessionChange={handleSessionChange}
           />
 
           {/* Main content constrained to max-width */}

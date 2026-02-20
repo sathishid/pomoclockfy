@@ -14,6 +14,7 @@ import TagInput from './TagInput';
  * - Settings icon
  * - Project selector with color coding
  * - Tag input with autocomplete
+ * - Session type selector
  * 
  * Props:
  * - timeLeft: seconds remaining
@@ -32,6 +33,7 @@ import TagInput from './TagInput';
  * - onTagsChange: (tags: array) => void
  * - onCreateProject: (project: object) => void
  * - onDone: () => void
+ * - onSessionChange: (session: string) => void
  */
 const TimerBar = ({
   timeLeft,
@@ -49,7 +51,8 @@ const TimerBar = ({
   onProjectChange,
   onTagsChange,
   onCreateProject,
-  onDone
+  onDone,
+  onSessionChange
 }) => {
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -84,6 +87,18 @@ const TimerBar = ({
         >
           {isRunning ? '⏸' : '▶'}
         </button>
+
+        {/* Session Type Selector */}
+        <select
+          className="timer-bar-session-select"
+          value={currentSession}
+          onChange={(e) => onSessionChange(e.target.value)}
+          title="Select session type"
+        >
+          <option value="work">Work</option>
+          <option value="break">Break</option>
+          <option value="longBreak">Long Break</option>
+        </select>
 
         {/* Task Input */}
         <input
